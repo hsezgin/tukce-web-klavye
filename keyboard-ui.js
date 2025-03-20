@@ -89,7 +89,6 @@
                 keyElement.addEventListener('click', function(e) {
                     e.stopPropagation(); // Tıklama olayının belgeye ulaşmasını engelle
                     window.keyboardInput.handleKeyPress(keyText);
-
                 });
 
                 rowElement.appendChild(keyElement);
@@ -104,7 +103,7 @@
                 rightShiftElement.type = 'button';
                 rightShiftElement.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    window.keyboardCore.handleKeyPress('Shift');
+                    window.keyboardInput.handleKeyPress('Shift');
                 });
                 rowElement.appendChild(rightShiftElement);
             }
@@ -128,7 +127,7 @@
         controlButton.type = 'button';
         controlButton.addEventListener('click', function(e) {
             e.stopPropagation();
-            window.keyboardCore.handleKeyPress('Control');
+            window.keyboardInput.handleKeyPress('Control');
         });
 
         controlContainer.appendChild(controlButton);
@@ -145,7 +144,7 @@
         leftArrow.type = 'button';
         leftArrow.addEventListener('click', function(e) {
             e.stopPropagation();
-            window.keyboardCore.handleKeyPress('ArrowLeft');
+            window.keyboardInput.handleKeyPress('ArrowLeft');
         });
 
         leftArrowContainer.appendChild(leftArrow);
@@ -162,7 +161,7 @@
         downArrow.type = 'button';
         downArrow.addEventListener('click', function(e) {
             e.stopPropagation();
-            window.keyboardCore.handleKeyPress('ArrowDown');
+            window.keyboardInput.handleKeyPress('ArrowDown');
         });
 
         downArrowContainer.appendChild(downArrow);
@@ -179,7 +178,7 @@
         upArrow.type = 'button';
         upArrow.addEventListener('click', function(e) {
             e.stopPropagation();
-            window.keyboardCore.handleKeyPress('ArrowUp');
+            window.keyboardInput.handleKeyPress('ArrowUp');
         });
 
         upArrowContainer.appendChild(upArrow);
@@ -196,7 +195,7 @@
         rightArrow.type = 'button';
         rightArrow.addEventListener('click', function(e) {
             e.stopPropagation();
-            window.keyboardCore.handleKeyPress('ArrowRight');
+            window.keyboardInput.handleKeyPress('ArrowRight');
         });
 
         rightArrowContainer.appendChild(rightArrow);
@@ -212,7 +211,7 @@
         spaceButton.type = 'button';
         spaceButton.addEventListener('click', function(e) {
             e.stopPropagation();
-            window.keyboardCore.handleKeyPress('Boşluk');
+            window.keyboardInput.handleKeyPress('Boşluk');
         });
 
         spaceContainer.appendChild(spaceButton);
@@ -228,7 +227,7 @@
         altGrButton.type = 'button';
         altGrButton.addEventListener('click', function(e) {
             e.stopPropagation();
-            window.keyboardCore.handleKeyPress('AltGr');
+            window.keyboardInput.handleKeyPress('AltGr');
         });
 
         altGrContainer.appendChild(altGrButton);
@@ -244,7 +243,7 @@
         closeButton.type = 'button';
         closeButton.addEventListener('click', function(e) {
             e.stopPropagation();
-            window.keyboardCore.hideKeyboard();
+            window.keyboardDisplay.hideKeyboard();
         });
 
         closeButtonContainer.appendChild(closeButton);
@@ -283,14 +282,14 @@
 
         // Pencere yeniden boyutlandırıldığında klavyeyi yeniden konumlandır
         window.addEventListener('resize', function() {
-            const keyboardState = window.keyboardCore.getState();
+            const keyboardState = window.keyboardState.getState();
             if (keyboardState.isKeyboardVisible && keyboardState.currentInput) {
                 positionKeyboard(keyboardState.keyboardElement, keyboardState.currentInput);
             }
         });
 
         // Klavye oluşturuldu, UI ve Düzenleme menüsü modüllerine erişim için referansları kaydet
-        const state = window.keyboardCore.getState();
+        const state = window.keyboardState.getState();
         state.keyboardElement = keyboardElement;
         state.editRowElement = editMenuElement;
 

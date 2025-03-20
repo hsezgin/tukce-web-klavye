@@ -15,7 +15,6 @@
         "keyboard-input.js",
         "keyboard-edit-menu.js",
         "keyboard-ui.js",
-        "keyboard-core.js",
         "keyboard-main.js"
       ],
       "css": [
