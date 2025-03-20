@@ -1,0 +1,45 @@
+{
+  "name": "Türkçe Web Klavyesi",
+  "version": "1.1",
+  "description": "Form alanlarına tıklandığında web tabanlı Türkçe ekran klavyesi açar",
+  "manifest_version": 3,
+  "permissions": ["activeTab", "scripting", "storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "charmaps.js",
+        "keyboard-state.js",
+        "keyboard-history.js",
+        "keyboard-display.js",
+        "keyboard-input.js",
+        "keyboard-edit-menu.js",
+        "keyboard-ui.js",
+        "keyboard-core.js",
+        "keyboard-main.js"
+      ],
+      "css": [
+        "keyboard.css",
+        "keyboard-base.css",
+        "keyboard-function-keys.css",
+        "keyboard-modifier-keys.css",
+        "keyboard-special-chars.css",
+        "keyboard-navigation.css",
+        "keyboard-control.css",
+        "keyboard-responsive.css",
+        "keyboard-browser-compatibility.css"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "50": "images/icon50.png",
+      "100": "images/icon100.png"
+    }
+  },
+  "icons": {
+    "50": "images/icon50.png",
+    "100": "images/icon100.png"
+  }
+}

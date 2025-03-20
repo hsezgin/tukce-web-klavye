@@ -1,0 +1,107 @@
+/* Ana konteyner stilleri */
+.turkish-keyboard-container {
+    display: none;
+    width: 100%; /* Ekran genişliğine göre tam genişlik */
+    max-width: 1100px; /* Maksimum genişlik daha büyük */
+    padding: 15px 20px; /* Daha fazla iç boşluk */
+    background-color: #2a2a2a;
+    border: 1px solid #555;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.7); /* Daha belirgin gölge */
+    z-index: 9999;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    position: fixed;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%); /* Yatayda tam ortala */
+    margin: 0 auto; /* Ortalamaya yardımcı olur */
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+}
+
+.turkish-keyboard-container[style*="display: block"] {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+}
+
+.turkish-keyboard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Satır stilleri */
+.keyboard-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.keyboard-last-row {
+    gap: 5px; /* Son satırdaki tuşlar arası boşluğu azalt */
+    margin-bottom: 0; /* Alt boşluğu kaldır */
+}
+/* Boşluk tuşu için genişletilmiş stil */
+.keyboard-space-container {
+    flex: 1; /* Konteyneri genişletmek için */
+    display: flex;
+    justify-content: center;
+}
+
+/* Boşluk tuşu için genişletilmiş stil */
+.keyboard-space-container .keyboard-space-btn {
+    width: 90% !important; /* Büyük ekranlarda da genişliği kontrol et */
+    min-width: 350px !important;
+    max-width: 600px !important;
+    height: 60px !important;
+    display: block !important;
+    margin: 0 auto !important;
+    border-radius: 25px !important;
+}
+
+/* Temel tuş stilleri */
+.keyboard-key {
+    min-width: 60px; /* Daha geniş tuşlar */
+    height: 60px; /* Daha yüksek tuşlar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #3b3b3b;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 6px;
+    font-size: 18px; /* Daha büyük font */
+    font-weight: 500; /* Daha belirgin yazı */
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+    margin: 0;
+    padding: 0;
+    outline: none;
+    position: relative;
+    flex: 1; /* Tuşların genişliği flex ile ayarlanıyor */
+    transition: all 0.1s ease; /* Tuşlara basma animasyonu */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Hafif 3D görünüm */
+}
+
+.keyboard-key:hover {
+    background-color: #4a4a4a;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.keyboard-key:active {
+    background-color: #666;
+    transform: translateY(2px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Özel tuş stilleri */
+.keyboard-special-key {
+    background-color: #1e1e1e;
+    color: #fff;
+    font-weight: bold;
+}

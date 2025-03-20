@@ -1,0 +1,12 @@
+/* Türkçe Web Klavyesi - Ana CSS Dosyası */
+
+/* Temel stil ve bileşenleri import et */
+@import url('keyboard-base.css');
+@import url('keyboard-function-keys.css');
+@import url('keyboard-modifier-keys.css');
+@import url('keyboard-special-chars.css');
+@import url('keyboard-navigation.css');
+@import url('keyboard-case.css');
+@import url('keyboard-control.css');
+@import url('keyboard-responsive.css');
+@import url('keyboard-browser-compatibility.css');

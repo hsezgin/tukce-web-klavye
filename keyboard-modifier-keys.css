@@ -1,0 +1,99 @@
+/* Shift tuşu stili */
+.keyboard-shift-btn {
+    width: 100px !important;
+    color: #ffcc00 !important;
+}
+
+.keyboard-key[data-key="Shift"] {
+    color: #ffcc00 !important;
+}
+
+.keyboard-key[data-key="Shift"]:hover,
+.keyboard-shift-btn:hover {
+    background-color: #4a4a4a;
+    color: #fff !important;
+}
+
+.keyboard-key[data-key="Shift"].keyboard-active,
+.keyboard-shift-btn.keyboard-active {
+    background-color: #9e8a00 !important;
+    color: #ffcc00 !important;
+}
+
+.keyboard-row:nth-child(4) .keyboard-shift-btn:last-child {
+    margin-left: 10px;
+    width: 100px !important;
+}
+
+/* Caps Lock tuşu stili */
+.keyboard-key[data-key="Caps"].keyboard-active {
+    text-transform: uppercase !important;
+    background-color: #6a8759 !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.keyboard-key[data-key="Caps"]::after {
+    content: "";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #444;
+}
+
+.keyboard-key[data-key="Caps"].keyboard-active::after {
+    background-color: #6eeb6e;
+    box-shadow: 0 0 5px #6eeb6e;
+}
+
+/* AltGr tuşu */
+.keyboard-altgr-container .keyboard-altgr-btn {
+    width: 100px !important;
+    height: 60px !important;
+    background-color: #444 !important;
+    margin: 0 auto !important;
+    color: #aaffaa !important;
+    display: block !important;
+}
+
+.keyboard-key[data-key="AltGr"].keyboard-active {
+    background-color: #3a6a3a !important;
+    color: #aaffaa !important;
+}
+
+/* Control tuşu */
+.keyboard-control-container .keyboard-control-btn {
+    width: 100px !important;
+    height: 60px !important;
+    background-color: #444 !important;
+    color: #00ccff !important;
+    font-weight: bold !important;
+    border: 1px solid #555 !important;
+    display: block !important;
+    margin: 0 auto !important;
+    text-transform: none !important;
+    font-size: 18px !important;
+}
+
+.keyboard-key[data-key="Control"].keyboard-active {
+    background-color: #006080 !important;
+    color: white !important;
+    box-shadow: 0 0 5px rgba(0, 204, 255, 0.5) !important;
+}
+
+.keyboard-key[data-key="Control"].keyboard-active:after {
+    content: " ✓";
+    font-size: 12px;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+/* Genel aktif tuş durumu */
+.keyboard-active {
+    background-color: #6a8759 !important;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3) !important;
+}

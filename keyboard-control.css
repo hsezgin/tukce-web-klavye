@@ -1,0 +1,90 @@
+/* Control tuşu aktifken özel tuşlar */
+.control-active .keyboard-key[data-key="z"],
+.control-active .keyboard-key[data-key="x"],
+.control-active .keyboard-key[data-key="c"],
+.control-active .keyboard-key[data-key="a"],
+.control-active .keyboard-key[data-key="v"] {
+    color: #00ccff !important;
+    background-color: #1e3b59 !important;
+    box-shadow: 0 0 5px rgba(0, 204, 255, 0.5) !important;
+    font-weight: bold !important;
+}
+
+.control-active .keyboard-key[data-key="z"]:hover,
+.control-active .keyboard-key[data-key="x"]:hover,
+.control-active .keyboard-key[data-key="c"]:hover,
+.control-active .keyboard-key[data-key="a"]:hover,
+.control-active .keyboard-key[data-key="v"]:hover {
+    background-color: #274e75 !important;
+    color: white !important;
+}
+
+.control-active .keyboard-key[data-key="z"]:active,
+.control-active .keyboard-key[data-key="x"]:active,
+.control-active .keyboard-key[data-key="c"]:active,
+.control-active .keyboard-key[data-key="a"]:active,
+.control-active .keyboard-key[data-key="v"]:active {
+    transform: translateY(2px) !important;
+    box-shadow: 0 0 8px rgba(0, 204, 255, 0.7) !important;
+}
+
+/* Control aktifken özel tuşlara bilgi etiketi ekle */
+.control-active .keyboard-key[data-key="a"]::after {
+    content: "Tümünü Seç";
+    font-size: 10px;
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.control-active .keyboard-key[data-key="c"]::after {
+    content: "Kopyala";
+    font-size: 10px;
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.control-active .keyboard-key[data-key="x"]::after {
+    content: "Kes";
+    font-size: 10px;
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.control-active .keyboard-key[data-key="v"]::after {
+    content: "Yapıştır";
+    font-size: 10px;
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.control-active .keyboard-key[data-key="z"]::after {
+    content: "Geri Al";
+    font-size: 10px;
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Control aktifken diğer tuşları soluk göster */
+.control-active .keyboard-key:not([data-key="z"]):not([data-key="x"]):not([data-key="c"]):not([data-key="a"]):not([data-key="v"]):not([data-key="Control"]):not([data-arrow-key]) {
+    opacity: 0.5 !important;
+}

@@ -1,0 +1,40 @@
+/* Ok tuşları stilleri */
+.keyboard-arrow-container {
+    margin: 0 3px;
+}
+
+.keyboard-arrow-key {
+    min-width: 65px !important;
+    height: 60px !important;
+    background-color: #1e1e1e !important;
+    color: #ffcc00 !important;
+    font-size: 24px !important;
+    text-transform: none !important;
+}
+
+.keyboard-key[data-arrow-key="ArrowLeft"],
+.keyboard-key[data-arrow-key="ArrowDown"],
+.keyboard-key[data-arrow-key="ArrowUp"],
+.keyboard-key[data-arrow-key="ArrowRight"] {
+    font-family: "Arial Unicode MS", sans-serif !important;
+    text-transform: none !important;
+}
+
+.keyboard-arrow-key:hover {
+    background-color: #3a3a3a !important;
+    color: white !important;
+    box-shadow: inset 0 0 5px rgba(255, 204, 0, 0.5) !important;
+}
+
+.keyboard-arrow-key:active {
+    background-color: #4a4a4a !important;
+    color: #ffcc00 !important;
+    box-shadow: inset 0 0 10px rgba(255, 204, 0, 0.7) !important;
+    transform: translateY(2px) !important;
+}
+
+.shift-active .keyboard-key[data-arrow-key],
+.caps-active .keyboard-key[data-arrow-key],
+.shift-active.caps-active .keyboard-key[data-arrow-key] {
+    text-transform: none !important;
+}

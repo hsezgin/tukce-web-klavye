@@ -1,0 +1,18 @@
+/* Tarayıcı uyumluluk fiksleri */
+/* Mac Safari için özel düzeltmeler */
+@supports (-webkit-touch-callout: none) {
+    .turkish-keyboard-container {
+        padding-bottom: env(safe-area-inset-bottom, 15px);
+    }
+}
+
+/* Firefox için özel düzeltmeler */
+@-moz-document url-prefix() {
+    .keyboard-key {
+        box-sizing: border-box;
+    }
+
+    .turkish-keyboard-container {
+        transform: translateX(-50%) !important;
+    }
+}

@@ -1,0 +1,41 @@
+/* Fonksiyon Tuşları */
+.keyboard-key[data-key="Sil"] {
+    min-width: 100px !important;
+    background-color: #7a2a2a !important;
+}
+
+.keyboard-enter-btn {
+    background-color: #1e1e1e;
+    min-width: 90px !important;
+}
+
+.keyboard-tab-btn {
+    width: 85px !important;
+}
+
+/* Boşluk tuşu */
+.keyboard-space-container {
+    flex-grow: 1;
+    margin: 0 5px;
+}
+
+.keyboard-space-container .keyboard-space-btn {
+    width: 100% !important;
+    min-width: 200px !important;
+    max-width: 350px !important;
+    height: 60px !important;
+    display: block !important;
+    margin: 0 auto !important;
+    border-radius: 25px !important;
+}
+
+/* Kapat butonu */
+.keyboard-close-container .keyboard-close-btn {
+    background-color: #d9342c !important;
+    color: white !important;
+    width: 90px !important;
+    height: 60px !important;
+    border-radius: 25px !important;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4) !important;
+    margin-left: 5px;
+}

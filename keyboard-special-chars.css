@@ -1,0 +1,85 @@
+/* Özel karakter gösterim stilleri */
+.key-shift-char,
+.key-altgr-char {
+    position: absolute !important;
+    display: block !important;
+    font-size: 14px !important;
+    opacity: 0.9 !important;
+    pointer-events: none !important;
+    z-index: 10 !important;
+}
+
+.key-shift-char {
+    top: 5px !important;
+    right: 7px !important;
+    color: #ffcc00 !important;
+}
+
+.key-altgr-char {
+    top: 5px !important;
+    left: 7px !important;
+    color: #aaffaa !important;
+}
+
+.keyboard-key:active .key-shift-char,
+.keyboard-key:active .key-altgr-char,
+.keyboard-key:hover .key-shift-char,
+.keyboard-key:hover .key-altgr-char {
+    display: block !important;
+    opacity: 0.9 !important;
+}
+
+/* Data attribute ile karakter gösterimi */
+.keyboard-key:not(.shift-active):not(.altgr-active) {
+    position: relative;
+}
+
+/* Shift aktif durumdaki karakter stili */
+.shift-active .keyboard-key[data-shift-char] {
+    color: transparent !important;
+}
+
+.shift-active .keyboard-key[data-shift-char]::after {
+    content: attr(data-shift-char);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffcc00 !important;
+    font-size: 24px !important;
+    text-shadow: 0 0 3px rgba(255, 204, 0, 0.5);
+    z-index: 10 !important;
+}
+
+.shift-active .keyboard-key[data-shift-char] {
+    background-color: #4a4a1e !important;
+}
+
+/* AltGr aktif durumdaki karakter stili */
+.altgr-active .keyboard-key[data-altgr-char] {
+    color: transparent !important;
+}
+
+.altgr-active .keyboard-key[data-altgr-char]::after {
+    content: attr(data-altgr-char);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #aaffaa !important;
+    font-size: 24px !important;
+    text-shadow: 0 0 3px rgba(170, 255, 170, 0.5);
+    z-index: 10 !important;
+}
+
+.altgr-active .keyboard-key[data-altgr-char] {
+    background-color: #1e4a1e !important;
+}
+
+/* Shift veya AltGr aktifken küçük karakterleri gizle */
+.shift-active .key-shift-char,
+.shift-active .key-altgr-char,
+.altgr-active .key-shift-char,
+.altgr-active .key-altgr-char {
+    display: none !important;
+}
