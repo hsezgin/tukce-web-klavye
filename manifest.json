@@ -12,9 +12,11 @@
         "keyboard-state.js",
         "keyboard-history.js",
         "keyboard-display.js",
+        "keyboard-display-module.js",
         "keyboard-input.js",
         "keyboard-edit-menu.js",
         "keyboard-ui.js",
+        "keyboard-draggable.js",
         "keyboard-main.js"
       ],
       "css": [
@@ -26,6 +28,7 @@
         "keyboard-navigation.css",
         "keyboard-control.css",
         "keyboard-responsive.css",
+        "keyboard-draggable.css",
         "keyboard-browser-compatibility.css"
       ]
     }

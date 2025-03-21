@@ -6,6 +6,110 @@
         positionKeyboard
     };
 
+    // Klavyeyi konumlandır
+    function positionKeyboard(keyboardElement, inputElement) {
+        if (!keyboardElement || !inputElement) return;
+
+        // Klavye daha önce manuel olarak konumlandırıldıysa, o pozisyonu koru
+        if (keyboardElement.hasAttribute('data-manually-positioned')) {
+            // Klavyeyi görünür yap ancak pozisyonunu değiştirme
+            keyboardElement.style.display = 'block';
+            keyboardElement.style.opacity = '1';
+            keyboardElement.style.visibility = 'visible';
+            return;
+        }
+
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+
+        // Input alanının konumunu al
+        const inputRect = inputElement.getBoundingClientRect();
+        const inputCenterY = inputRect.top + (inputRect.height / 2);
+
+        // Ekranın orta noktası
+        const screenMiddleY = viewportHeight / 2;
+
+        // Klavye boyutlarını al
+        let keyboardHeight, keyboardWidth;
+
+        try {
+            // Klavye halihazırda görünür değilse, geçici olarak eklemek gerekebilir
+            const isVisible = keyboardElement.style.display !== 'none';
+            if (!isVisible) {
+                // Geçici olarak görünür yap, ancak opasiteyi sıfıra ayarla
+                const originalDisplay = keyboardElement.style.display;
+                const originalOpacity = keyboardElement.style.opacity;
+
+                keyboardElement.style.opacity = "0";
+                keyboardElement.style.display = "block";
+
+                keyboardHeight = keyboardElement.offsetHeight || 320;
+                keyboardWidth = keyboardElement.offsetWidth || 900;
+
+                // Geri al
+                keyboardElement.style.opacity = originalOpacity;
+                keyboardElement.style.display = originalDisplay;
+            } else {
+                keyboardHeight = keyboardElement.offsetHeight || 320;
+                keyboardWidth = keyboardElement.offsetWidth || 900;
+            }
+        } catch (e) {
+            // Hata durumunda varsayılan değerleri kullan
+            console.warn("Klavye boyutları ölçülemedi:", e);
+            keyboardHeight = 320;
+            keyboardWidth = 900;
+        }
+
+        // Genel ölçeklendirme oranı
+        const scaleRatio = 0.85; // 15% daha küçük
+
+        // Genişlik - Ekran genişliğinin 90%'ı, ama klavyenin kendi genişliğini geçmemeli
+        const maxWidth = Math.min(viewportWidth * 0.9, keyboardWidth);
+        const targetWidth = maxWidth / scaleRatio; // Ölçeklendirmeyi dikkate alarak genişliği ayarla
+
+        // Klavye konumunu belirle - input alanı ekranın alt yarısındaysa üstte, üst yarısındaysa altta
+        const positionBottom = inputCenterY < screenMiddleY;
+
+        // Klavye stil ayarları
+        keyboardElement.style.position = 'fixed';
+        keyboardElement.style.left = '50%';
+        keyboardElement.style.width = `${targetWidth}px`;
+        keyboardElement.style.maxWidth = '100%';
+        keyboardElement.style.zIndex = '2147483647';
+
+        if (positionBottom) {
+            // Ekranın alt tarafına konumlandır
+            keyboardElement.style.top = 'auto';
+            keyboardElement.style.bottom = '20px';
+            keyboardElement.style.transformOrigin = 'bottom center';
+        } else {
+            // Ekranın üst tarafına konumlandır
+            keyboardElement.style.top = '20px';
+            keyboardElement.style.bottom = 'auto';
+            keyboardElement.style.transformOrigin = 'top center';
+        }
+
+        // Ölçeklendirme, genişlik ve yatay ortalama
+        keyboardElement.style.transform = `translateX(-50%) scale(${scaleRatio})`;
+
+        // Google.com gibi siteler için özel kontroller
+        if (window.location.hostname.includes('google.com')) {
+            keyboardElement.style.zIndex = '2147483647';
+        }
+
+        // Klavyeyi görünür yap
+        keyboardElement.style.display = 'block';
+        keyboardElement.style.opacity = '1';
+        keyboardElement.style.visibility = 'visible';
+
+        // Form elemanlarına tıklama olay dinleyicileri yeniden kuruluyor mu kontrol et
+        if (typeof window.keyboardCore !== 'undefined' && window.keyboardCore.setupFormElementListeners) {
+            setTimeout(() => {
+                window.keyboardCore.setupFormElementListeners();
+            }, 500);
+        }
+    }
+
     // Klavyeyi oluştur
     function createKeyboardElement() {
         // Karakter haritaları modülünü kullan
@@ -270,7 +374,18 @@
         keyboardElement.addEventListener('click', function(e) {
             e.stopPropagation();
         });
-        document.body.appendChild(keyboardElement);
+
+        // Klavyeyi DOM'a ekle
+        try {
+            document.body.appendChild(keyboardElement);
+        } catch (e) {
+            console.warn("Klavye body'ye eklenemedi, alternatif yöntem deneniyor", e);
+            try {
+                document.documentElement.appendChild(keyboardElement);
+            } catch (e2) {
+                console.error("Klavye HTML'e de eklenemedi:", e2);
+            }
+        }
 
         // Klavye oluşturulduktan sonra özel karakterlerin doğru görünmesini sağla
         setTimeout(function() {
@@ -280,112 +395,17 @@
             }
         }, 50);
 
-        // Pencere yeniden boyutlandırıldığında klavyeyi yeniden konumlandır
-        window.addEventListener('resize', function() {
-            const keyboardState = window.keyboardState.getState();
-            if (keyboardState.isKeyboardVisible && keyboardState.currentInput) {
-                positionKeyboard(keyboardState.keyboardElement, keyboardState.currentInput);
-            }
-        });
-
-        // Klavye oluşturuldu, UI ve Düzenleme menüsü modüllerine erişim için referansları kaydet
+        // Klavye oluşturuldu, global değişkenlere erişim için referansları kaydet
         const state = window.keyboardState.getState();
         state.keyboardElement = keyboardElement;
         state.editRowElement = editMenuElement;
 
+        // Klavyeyi basılı tutulduğunda taşınabilir yap - keyboard-draggable.js modülünü kullan
+        if (window.keyboardDrag && window.keyboardDrag.makeDraggable) {
+            window.keyboardDrag.makeDraggable(keyboardElement);
+        }
+
         return keyboardElement;
-    }
-
-    // Klavyeyi konumlandır
-    function positionKeyboard(keyboardElement, inputElement) {
-        if (!keyboardElement || !inputElement) return;
-
-        const viewportHeight = window.innerHeight;
-        const viewportWidth = window.innerWidth;
-
-        // Klavye boyutlarını al
-        const keyboardHeight = keyboardElement.offsetHeight || 320;
-        const keyboardWidth = keyboardElement.offsetWidth || 900;
-
-        // Input alanının konumunu al
-        const rect = inputElement.getBoundingClientRect();
-
-        // Mobil cihaz kontrolü
-        const isMobile = window.innerWidth <= 900 || 'ontouchstart' in window;
-
-        if (isMobile) {
-            // Mobil cihazlarda klavye ekranın en altında olsun
-            keyboardElement.style.position = 'fixed';
-            keyboardElement.style.top = 'auto';
-            keyboardElement.style.bottom = '0';
-            keyboardElement.style.left = '0';
-            keyboardElement.style.right = '0';
-            keyboardElement.style.width = '100%';
-            keyboardElement.style.transform = 'none';
-            keyboardElement.style.maxHeight = `${viewportHeight * 0.5}px`;
-
-            // Form alanı görünür olsun diye sayfayı kaydır
-            setTimeout(() => {
-                const scrollAmount = Math.max(0, rect.top - 100);
-                window.scrollTo({
-                    top: scrollAmount,
-                    behavior: 'smooth'
-                });
-            }, 50);
-
-            return;
-        }
-
-        // Klavyenin ekranın alt kısmına sığıp sığmayacağını kontrol et
-        const spaceBelow = viewportHeight - rect.bottom;
-        const spaceAbove = rect.top;
-
-        // Input alanının görünür durumda olması için minimum boşluk
-        const minInputVisibility = 30; // px
-
-        // Ekranın altında yeterli alan yoksa, klavyeyi üstte konumlandır
-        if (spaceBelow < keyboardHeight && spaceAbove > keyboardHeight) {
-            // Input alanının üstüne konumlandır
-            keyboardElement.style.position = 'fixed';
-            keyboardElement.style.bottom = `${viewportHeight - rect.top + 10}px`;
-            keyboardElement.style.top = 'auto';
-        }
-        // Ekranın altında yeterli alan varsa veya üstte de yeterli alan yoksa
-        else {
-            // Input alanının altına konumlandır, ancak ekranın dışına taşmasını engelle
-            keyboardElement.style.position = 'fixed';
-
-            // Klavyenin üst pozisyonunu, ekranın dışına taşmadan ayarla
-            const topPosition = Math.min(rect.bottom + 10, viewportHeight - keyboardHeight - 10);
-            keyboardElement.style.top = `${topPosition}px`;
-            keyboardElement.style.bottom = 'auto';
-
-            // Input alanı görünür değilse, sayfayı kaydır
-            if (rect.bottom + minInputVisibility > topPosition) {
-                setTimeout(() => {
-                    const scrollAmount = window.scrollY + rect.top - minInputVisibility;
-                    window.scrollTo({
-                        top: scrollAmount,
-                        behavior: 'smooth'
-                    });
-                }, 50);
-            }
-        }
-
-        // Yatayda merkeze hizala, ancak ekrandan taşmasını engelle
-        const leftPos = Math.max(10, Math.min(
-            rect.left + (rect.width / 2) - (keyboardWidth / 2),
-            viewportWidth - keyboardWidth - 10
-        ));
-        keyboardElement.style.left = `${leftPos}px`;
-
-        // Ekran çok küçükse klavyeyi küçült
-        if (viewportHeight < 600 || viewportWidth < 800) {
-            keyboardElement.style.transform = 'scale(0.85)';
-            keyboardElement.style.transformOrigin = 'center bottom';
-        } else {
-            keyboardElement.style.transform = 'none';
-        }
     }
 
     // Klavye UI modülünü globale aktar

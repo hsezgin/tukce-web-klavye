@@ -216,6 +216,33 @@
                 state.keyboardElement = this.createKeyboard();
             }
 
+            state.lastKeyboardOpenTime = Date.now();
+
+            // Eğer klavye manuel olarak konumlandırılmışsa, bu konumu koru ve sadece görünür yap
+            if (state.keyboardElement.hasAttribute('data-manually-positioned')) {
+                // Klavyeyi görünür yap ancak pozisyonunu değiştirme
+                state.keyboardElement.style.display = 'block';
+                state.keyboardElement.style.opacity = '1';
+                state.keyboardElement.style.visibility = 'visible';
+                window.keyboardState.setKeyboardVisibility(true);
+            } else {
+                // Klavyeyi otomatik konumlandır
+                window.keyboardUI.positionKeyboard(state.keyboardElement, state.currentInput);
+                state.keyboardElement.style.display = 'block';
+                window.keyboardState.setKeyboardVisibility(true);
+            }
+
+            // Tuşların görünümünü güncelle
+            this.updateKeyDisplay();
+
+            if (!state.documentClickListener) {
+                state.documentClickListener = this.handleDocumentClick.bind(this);
+                // 100ms gecikme ekleyerek, klavyenin açılmasıyla tıklama arasında bir tampon oluştur
+                setTimeout(() => {
+                    document.addEventListener('click', state.documentClickListener);
+                }, 100);
+            }
+
             // Klavye açılmadan önce input alanının yerini kaydet
             const inputRect = state.currentInput.getBoundingClientRect();
             const viewportHeight = window.innerHeight;
@@ -268,6 +295,7 @@
             const state = window.keyboardState.getState();
 
             if (state.keyboardElement) {
+                // Klavyeyi gizle ama DOM'dan kaldırma
                 state.keyboardElement.style.display = 'none';
                 window.keyboardState.setKeyboardVisibility(false);
 

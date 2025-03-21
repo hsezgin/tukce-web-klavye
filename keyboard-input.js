@@ -1,5 +1,72 @@
 // Türkçe Web Klavyesi - Girdi İşlemleri Modülü
 (function() {
+    // Input türünün selection işlemlerini destekleyip desteklemediğini kontrol et
+    function supportsSelection(inputElement) {
+        if (!inputElement) return false;
+
+        // Selection API'sini desteklemeyen input türleri
+        const nonSelectableTypes = ['date', 'datetime', 'datetime-local', 'month', 'week', 'time', 'color', 'range', 'file', 'hidden'];
+
+        // Input etiketi değilse veya desteklenmeyen bir türse, false döndür
+        if (inputElement.tagName !== 'INPUT' && inputElement.tagName !== 'TEXTAREA') {
+            return true; // Etiket INPUT veya TEXTAREA değilse (örn. contenteditable div), desteklediğini varsay
+        }
+
+        if (nonSelectableTypes.includes(inputElement.type)) {
+            return false;
+        }
+
+        // Email türü için tarayıcı testi yap
+        if (inputElement.type === 'email') {
+            try {
+                // Test et - atama yapıp hata verip vermediğine bak
+                const currentStart = inputElement.selectionStart;
+                inputElement.selectionStart = currentStart;
+                return true; // Hata vermedi, destekliyor
+            } catch (e) {
+                return false; // Hata verdi, desteklemiyor
+            }
+        }
+
+        return true; // Diğer türler (text, search, tel, url, password) genelde destekler
+    }
+
+    // Selection işlemini güvenli bir şekilde uygula
+    function safelySetSelection(inputElement, startPos, endPos) {
+        if (!inputElement) return false;
+
+        // İnput üzerinde selection API'sini kullanabilir miyiz kontrol et
+        if (supportsSelection(inputElement)) {
+            try {
+                inputElement.selectionStart = startPos;
+                inputElement.selectionEnd = endPos || startPos;
+                return true;
+            } catch (e) {
+                console.warn('Selection API hatası:', e);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    // Selection değerlerini güvenli bir şekilde oku
+    function safelyGetSelection(inputElement) {
+        if (!inputElement) return { start: 0, end: 0 };
+
+        if (supportsSelection(inputElement)) {
+            try {
+                return {
+                    start: inputElement.selectionStart || 0,
+                    end: inputElement.selectionEnd || 0
+                };
+            } catch (e) {
+                console.warn('Selection API okuma hatası:', e);
+                return { start: 0, end: 0 };
+            }
+        }
+        return { start: 0, end: 0 };
+    }
+
     // Girdi işlemleri fonksiyonları
     const keyboardInput = {
         // Form elemanlarını izleme
@@ -29,6 +96,11 @@
             // Klavyeyi göster
             window.keyboardDisplay.showKeyboard();
 
+            // Bu satırı ekleyin - Input metni hemen göster
+            if (window.keyboardDisplayText) {
+                window.keyboardDisplayText.updateInputText(e.target);
+            }
+
             // Input alanının eventlerini özelleştir
             if (e.target && !e.target.getAttribute('data-keyboard-events-set')) {
                 // Bu alanın eventlerinin ayarlandığını işaretle
@@ -57,13 +129,19 @@
 
         // Control+C işlemi
         handleCopy: function(inputElement) {
+            if (!supportsSelection(inputElement)) {
+                console.warn("Bu alan kopyalama işlemini desteklemiyor");
+                return false;
+            }
+
             try {
                 document.execCommand('copy');
             } catch (e) {
                 // Execommand başarısız olursa, modern API kullan
+                const selection = safelyGetSelection(inputElement);
                 const selectedText = inputElement.value.substring(
-                    inputElement.selectionStart,
-                    inputElement.selectionEnd
+                    selection.start,
+                    selection.end
                 );
                 if (navigator.clipboard) {
                     navigator.clipboard.writeText(selectedText);
@@ -81,11 +159,14 @@
                         .then(text => {
                             if (text) {
                                 // Metni seçili alana veya imleç konumuna yerleştir
-                                const start = inputElement.selectionStart;
-                                const end = inputElement.selectionEnd;
+                                const selection = safelyGetSelection(inputElement);
+                                const start = selection.start;
+                                const end = selection.end;
                                 const value = inputElement.value;
                                 inputElement.value = value.slice(0, start) + text + value.slice(end);
-                                inputElement.selectionStart = inputElement.selectionEnd = start + text.length;
+
+                                // Eğer selection API destekleniyorsa cursor pozisyonunu ayarla
+                                safelySetSelection(inputElement, start + text.length, start + text.length);
 
                                 // Input olayını tetikle
                                 const event = new Event('input', { bubbles: true });
@@ -107,24 +188,30 @@
 
         // Control+X işlemi
         handleCut: function(inputElement) {
+            if (!supportsSelection(inputElement)) {
+                console.warn("Bu alan kesme işlemini desteklemiyor");
+                return false;
+            }
+
             try {
                 document.execCommand('cut');
             } catch (e) {
                 // Clipboard API ile manuel kes
+                const selection = safelyGetSelection(inputElement);
                 const selectedText = inputElement.value.substring(
-                    inputElement.selectionStart,
-                    inputElement.selectionEnd
+                    selection.start,
+                    selection.end
                 );
                 if (navigator.clipboard) {
                     navigator.clipboard.writeText(selectedText);
                 }
 
                 // Seçili metni sil
-                const start = inputElement.selectionStart;
-                const end = inputElement.selectionEnd;
+                const start = selection.start;
+                const end = selection.end;
                 const value = inputElement.value;
                 inputElement.value = value.slice(0, start) + value.slice(end);
-                inputElement.selectionStart = inputElement.selectionEnd = start;
+                safelySetSelection(inputElement, start, start);
 
                 // Input olayını tetikle
                 const event = new Event('input', { bubbles: true });
@@ -135,22 +222,26 @@
 
         // İmleç hareketlerini yönet
         handleCursorMovement: function(direction, inputElement) {
-            const selStart = inputElement.selectionStart || 0;
-            const selEnd = inputElement.selectionEnd || 0;
+            // Selection API desteği yoksa işlemi atla
+            if (!supportsSelection(inputElement)) return;
+
+            const selection = safelyGetSelection(inputElement);
+            const selStart = selection.start;
+            const selEnd = selection.end;
             const text = inputElement.value || '';
 
             switch (direction) {
                 case 'left':
                     // İmleç konumunu sola taşı
                     if (selStart > 0) {
-                        inputElement.selectionStart = inputElement.selectionEnd = selStart - 1;
+                        safelySetSelection(inputElement, selStart - 1, selStart - 1);
                     }
                     break;
 
                 case 'right':
                     // İmleç konumunu sağa taşı
                     if (selStart < text.length) {
-                        inputElement.selectionStart = inputElement.selectionEnd = selStart + 1;
+                        safelySetSelection(inputElement, selStart + 1, selStart + 1);
                     }
                     break;
 
@@ -171,7 +262,7 @@
                     const prevLineLength = lineStart - prevLineStart;
                     const newPos = prevLineStart + Math.min(columnPos, prevLineLength - 1);
 
-                    inputElement.selectionStart = inputElement.selectionEnd = newPos;
+                    safelySetSelection(inputElement, newPos, newPos);
                     break;
 
                 case 'down':
@@ -199,19 +290,32 @@
                     const nextLineLength = nextLineEnd - nextLineStart;
                     const newPosDown = nextLineStart + Math.min(columnPosDown, nextLineLength);
 
-                    inputElement.selectionStart = inputElement.selectionEnd = newPosDown;
+                    safelySetSelection(inputElement, newPosDown, newPosDown);
                     break;
             }
         },
 
         // Özel tuş işlemleri
         handleSpecialKey: function(key, inputElement) {
-            let selStart = inputElement.selectionStart || 0;
-            let selEnd = inputElement.selectionEnd || 0;
+            const selection = safelyGetSelection(inputElement);
+            const selStart = selection.start;
+            const selEnd = selection.end;
             let text = inputElement.value || '';
+            const form = inputElement.closest('form');
 
             switch (key) {
                 case 'Sil':
+                    // Önceki silme işlemlerini temizle
+                    if (window.silInterval) {
+                        clearInterval(window.silInterval);
+                        window.silInterval = null;
+                    }
+                    if (window.silTimeout) {
+                        clearTimeout(window.silTimeout);
+                        window.silTimeout = null;
+                    }
+
+                    // İlk silme işlemi
                     if (selStart === selEnd) {
                         if (selStart > 0) {
                             inputElement.value = text.slice(0, selStart - 1) + text.slice(selEnd);
@@ -221,27 +325,106 @@
                         inputElement.value = text.slice(0, selStart) + text.slice(selEnd);
                         inputElement.selectionStart = inputElement.selectionEnd = selStart;
                     }
+
+                    // Input olayını tetikle
+                    const event = new Event('input', { bubbles: true });
+                    inputElement.dispatchEvent(event);
+
+                    // Hızlı silme için global değişkenler kullan
+                    // İlk silme işleminden hemen sonra hızlı silmeye başla
+                    window.silTimeout = setTimeout(() => {
+                        // Tuşa basılı tutulursa hızlı silme başlat
+                        window.silInterval = setInterval(() => {
+                            const currentText = inputElement.value;
+                            const currentSelStart = inputElement.selectionStart;
+
+                            if (currentSelStart > 0) {
+                                inputElement.value = currentText.slice(0, currentSelStart - 1) + currentText.slice(currentSelStart);
+                                inputElement.selectionStart = inputElement.selectionEnd = currentSelStart - 1;
+
+                                // Input olayını tetikle
+                                const silEvent = new Event('input', { bubbles: true });
+                                inputElement.dispatchEvent(silEvent);
+                            } else {
+                                // Artık silinecek karakter kalmadıysa interval'ı durdur
+                                clearInterval(window.silInterval);
+                                window.silInterval = null;
+                            }
+                        }, 50); // 50ms aralıklarla hızlı silme
+                    }, 200); // 200ms sonra hızlı silmeye başla (daha hızlı tepki vermesi için)
+
                     return true;
 
                 case 'Tab':
-                    // Tab için 4 boşluk ekle
+                    // Shift tuşu basılıysa bir önceki forma git
+                    const state = window.keyboardState.getState();
+                    const isShiftActive = state.isShiftActive;
+
+                    // Formdaki tüm input, select ve textarea elemanlarını bul
+
+                    if (form) {
+                        const focusableElements = form.querySelectorAll('input, select, textarea, button');
+                        const focusableArray = Array.from(focusableElements)
+                            .filter(el => el.offsetParent !== null); // Görünür elemanları filtrele
+
+                        const currentIndex = focusableArray.indexOf(inputElement);
+
+                        // Bir sonraki veya bir önceki elemana geç
+                        let nextIndex;
+                        if (isShiftActive) {
+                            // Shift + Tab: Bir önceki elemana git
+                            nextIndex = currentIndex > 0 ? currentIndex - 1 : focusableArray.length - 1;
+                        } else {
+                            // Normal Tab: Bir sonraki elemana git
+                            nextIndex = (currentIndex + 1) % focusableArray.length;
+                        }
+
+                        // Sonraki veya önceki elemana odaklan
+                        const nextElement = focusableArray[nextIndex];
+                        if (nextElement) {
+                            nextElement.focus();
+                            // Eğer input alanıysa tüm metni seç
+                            if (nextElement.select) {
+                                nextElement.select();
+                            }
+                            return true;
+                        }
+                    }
+
+                    // Form yoksa veya özel bir durum varsa varsayılan Tab davranışı
                     text = text.slice(0, selStart) + '    ' + text.slice(selEnd);
                     inputElement.value = text;
                     inputElement.selectionStart = inputElement.selectionEnd = selStart + 4;
                     return true;
 
                 case 'Enter':
-                    // Enter tuşu için yeni satır ekle
-                    text = text.slice(0, selStart) + '\n' + text.slice(selEnd);
-                    inputElement.value = text;
-                    inputElement.selectionStart = inputElement.selectionEnd = selStart + 1;
+                    // Eğer input bir form içindeyse ve submit edilebilirse submit et
+                    if (form) {
+                        // Form varsa ve submit edilebilirse
+                        const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+                        if (submitButton) {
+                            submitButton.click(); // Form submit butonu varsa tıkla
+                            return true;
+                        } else {
+                            // Submit butonları yoksa, formu submit et
+                            form.dispatchEvent(new Event('submit', { cancelable: true }));
+                            return true;
+                        }
+                    }
+
+                    // Form yoksa veya submit edilemezse yeni satır ekle (textarea gibi)
+                    if (inputElement.nodeName === 'TEXTAREA') {
+                        text = text.slice(0, selStart) + '\n' + text.slice(selEnd);
+                        inputElement.value = text;
+                        inputElement.selectionStart = inputElement.selectionEnd = selStart + 1;
+                    }
                     return true;
 
                 case 'Boşluk':
                     // Boşluk ekle
                     text = text.slice(0, selStart) + ' ' + text.slice(selEnd);
                     inputElement.value = text;
-                    inputElement.selectionStart = inputElement.selectionEnd = selStart + 1;
+                    safelySetSelection(inputElement, selStart + 1, selStart + 1);
                     return true;
 
                 case 'Kapat':
@@ -249,6 +432,9 @@
                     return true;
 
                 case 'HepsiniSec':
+                    if (supportsSelection(inputElement)) {
+                        inputElement.select();
+                    }
                     if (window.keyboardEditMenu && window.keyboardEditMenu.toggleEditMenu) {
                         window.keyboardEditMenu.toggleEditMenu();
                     }
@@ -264,6 +450,11 @@
             const inputElement = state.currentInput;
 
             if (!inputElement) return;
+
+            // Yazılan metni başlık bölümünde göster
+            if (window.keyboardDisplayText && inputElement) {
+                window.keyboardDisplayText.handleKeyPress(key, inputElement);
+            }
 
             // Input alanını aktif et - mevcut odağı koruyarak
             inputElement.focus();
@@ -337,7 +528,9 @@
                 // Control tuşu ile özel kombinasyonlar
                 switch (key) {
                     case 'a': // Control+A: Tümünü seç
-                        inputElement.select();
+                        if (supportsSelection(inputElement)) {
+                            inputElement.select();
+                        }
                         window.keyboardState.toggleControlActive(); // Kullanıldıktan sonra devre dışı bırak
                         window.keyboardDisplay.updateKeyDisplay();
                         return;
@@ -417,12 +610,13 @@
             }
 
             // Metni doğrudan manipüle et
-            const selStart = inputElement.selectionStart || 0;
-            const selEnd = inputElement.selectionEnd || 0;
+            const selection = safelyGetSelection(inputElement);
+            const selStart = selection.start;
+            const selEnd = selection.end;
             const text = inputElement.value || '';
 
             inputElement.value = text.slice(0, selStart) + charToInsert + text.slice(selEnd);
-            inputElement.selectionStart = inputElement.selectionEnd = selStart + charToInsert.length;
+            safelySetSelection(inputElement, selStart + charToInsert.length, selStart + charToInsert.length);
 
             // Input olayını tetikle
             this.triggerInputEvent(inputElement);

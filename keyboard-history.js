@@ -1,5 +1,65 @@
 // Türkçe Web Klavyesi - Tarihçe Yönetimi Modülü
 (function() {
+    // Selection işlemlerini güvenli yapacak yardımcı fonksiyonlar
+    function supportsSelection(inputElement) {
+        if (!inputElement) return false;
+
+        // Selection API'sini desteklemeyen input türleri
+        const nonSelectableTypes = ['date', 'datetime', 'datetime-local', 'month', 'week', 'time', 'color', 'range', 'file', 'hidden'];
+
+        if (inputElement.tagName !== 'INPUT' && inputElement.tagName !== 'TEXTAREA') {
+            return true; // Etiket INPUT veya TEXTAREA değilse, desteklediğini varsay
+        }
+
+        if (nonSelectableTypes.includes(inputElement.type)) {
+            return false;
+        }
+
+        // Email türü için tarayıcı testi yap
+        if (inputElement.type === 'email') {
+            try {
+                const currentStart = inputElement.selectionStart;
+                inputElement.selectionStart = currentStart;
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function safelyGetSelection(inputElement) {
+        if (!inputElement) return { start: 0, end: 0 };
+
+        if (supportsSelection(inputElement)) {
+            try {
+                return {
+                    start: inputElement.selectionStart || 0,
+                    end: inputElement.selectionEnd || 0
+                };
+            } catch (e) {
+                return { start: 0, end: 0 };
+            }
+        }
+        return { start: 0, end: 0 };
+    }
+
+    function safelySetSelection(inputElement, startPos, endPos) {
+        if (!inputElement) return false;
+
+        if (supportsSelection(inputElement)) {
+            try {
+                inputElement.selectionStart = startPos;
+                inputElement.selectionEnd = endPos || startPos;
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
     // Tarihçe yönetimi fonksiyonları
     const keyboardHistory = {
         // Input elemanını izlemeye başla
@@ -12,10 +72,11 @@
             const inputId = inputElement.id || 'anonymous-' + Math.random().toString(36).substr(2, 9);
 
             // Başlangıç durumunu kaydet
+            const selection = safelyGetSelection(inputElement);
             const initialState = {
                 text: inputElement.value,
-                selectionStart: inputElement.selectionStart || 0,
-                selectionEnd: inputElement.selectionEnd || 0,
+                selectionStart: selection.start,
+                selectionEnd: selection.end,
                 timestamp: Date.now()
             };
 
@@ -26,10 +87,11 @@
             // Input olayını dinle
             inputElement.addEventListener('input', function(e) {
                 // Yeni durum
+                const newSelection = safelyGetSelection(inputElement);
                 const newState = {
                     text: inputElement.value,
-                    selectionStart: inputElement.selectionStart || 0,
-                    selectionEnd: inputElement.selectionEnd || 0,
+                    selectionStart: newSelection.start,
+                    selectionEnd: newSelection.end,
                     timestamp: Date.now()
                 };
 
@@ -57,8 +119,7 @@
 
             // Önceki durumu geri yükle
             inputElement.value = previousState.text;
-            inputElement.selectionStart = previousState.selectionStart;
-            inputElement.selectionEnd = previousState.selectionEnd;
+            safelySetSelection(inputElement, previousState.selectionStart, previousState.selectionEnd);
 
             return true;
         },
@@ -80,8 +141,7 @@
 
             // Sonraki durumu yükle
             inputElement.value = nextState.text;
-            inputElement.selectionStart = nextState.selectionStart;
-            inputElement.selectionEnd = nextState.selectionEnd;
+            safelySetSelection(inputElement, nextState.selectionStart, nextState.selectionEnd);
 
             return true;
         },

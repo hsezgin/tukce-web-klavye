@@ -1,5 +1,11 @@
 /* Duyarlı tasarım - mobil uyumluluk */
 
+/* Genel ölçeklendirme - tüm ekranlarda biraz daha küçük klavye */
+.turkish-keyboard-container {
+    transform-origin: bottom center;
+    transform: scale(0.85); /* Varsayılan olarak daha küçük */
+}
+
 /* Büyük ekranlar için ek düzenleme */
 @media screen and (min-width: 1101px) {
     .keyboard-space-container {
@@ -12,17 +18,24 @@
         min-width: 400px !important;
         max-width: 550px !important;
     }
+
+    /* Büyük ekranlarda bile klavyeyi kompakt tut */
+    .turkish-keyboard-container {
+        transform: scale(0.85);
+    }
 }
 
+/* Orta boy ekranlar için düzenleme */
 @media screen and (max-width: 1100px) {
     .turkish-keyboard-container {
         width: 95%;
         max-width: none;
+        transform: scale(0.8); /* Daha küçük */
     }
 
     .keyboard-key {
-        min-width: 45px;
-        height: 50px;
+        min-width: 40px; /* Daha dar tuşlar */
+        height: 45px; /* Daha alçak tuşlar */
         font-size: 16px;
     }
 
@@ -30,6 +43,7 @@
         width: 95% !important;
         min-width: 250px !important;
         max-width: 500px !important;
+        height: 45px !important;
     }
 
     .keyboard-row {
@@ -38,15 +52,21 @@
 
     .keyboard-arrow-key {
         min-width: 40px !important;
-        height: 50px !important;
+        height: 45px !important;
     }
 }
 
+/* Tablet ve küçük ekranlar için düzenleme */
 @media screen and (max-width: 768px) {
+    .turkish-keyboard-container {
+        transform: scale(0.75); /* Daha da küçük */
+    }
+
     .keyboard-key {
         min-width: 35px;
-        height: 45px;
+        height: 42px;
         font-size: 14px;
+        border-radius: 5px; /* Daha yumuşak köşeler */
     }
 
     .key-shift-char,
@@ -58,37 +78,50 @@
         width: 95% !important;
         min-width: 200px !important;
         max-width: 400px !important;
-        height: 45px !important;
+        height: 42px !important;
     }
 
     .keyboard-control-container .keyboard-control-btn,
     .keyboard-altgr-container .keyboard-altgr-btn {
-        width: 70px !important;
-        height: 45px !important;
+        width: 60px !important;
+        height: 42px !important;
     }
 
     .keyboard-row:nth-child(4) .keyboard-shift-btn:last-child {
-        width: 70px !important;
+        width: 60px !important;
     }
 
     .keyboard-arrow-key {
-        min-width: 50px !important;
-        height: 45px !important;
+        min-width: 40px !important;
+        height: 42px !important;
         font-size: 18px !important;
+    }
+
+    /* Dokunmatik için daha iyi boşluk */
+    .keyboard-row {
+        gap: 4px;
+        margin-bottom: 4px;
     }
 }
 
+/* Mobil cihazlar için düzenleme */
 @media screen and (max-width: 480px) {
+    .turkish-keyboard-container {
+        transform: scale(0.7); /* Mobilde daha küçük */
+        padding: 10px;
+    }
+
     .keyboard-key {
-        min-width: 30px;
+        min-width: 32px;
         height: 40px;
         font-size: 12px;
+        border-radius: 4px;
     }
 
     .keyboard-enter-btn,
     .keyboard-tab-btn,
     .keyboard-shift-btn {
-        min-width: 50px !important;
+        min-width: 45px !important;
     }
 
     .keyboard-space-container .keyboard-space-btn {
@@ -100,24 +133,61 @@
 
     .keyboard-control-container .keyboard-control-btn,
     .keyboard-altgr-container .keyboard-altgr-btn {
-        width: 60px !important;
+        width: 50px !important;
         height: 40px !important;
         font-size: 12px !important;
     }
 
     .keyboard-row:nth-child(4) .keyboard-shift-btn:last-child {
-        width: 60px !important;
+        width: 50px !important;
     }
 
     .keyboard-arrow-key {
-        min-width: 45px !important;
+        min-width: 38px !important;
         height: 40px !important;
         font-size: 16px !important;
     }
 
     .keyboard-close-container .keyboard-close-btn {
-        width: 70px !important;
+        width: 60px !important;
         height: 40px !important;
         font-size: 12px !important;
+    }
+
+    /* Daha kompakt görünüm */
+    .keyboard-row {
+        gap: 3px;
+        margin-bottom: 3px;
+    }
+}
+/* Dokunmatik ekranlarda optimize edilmiş tuşlar */
+@media (pointer: coarse) {
+    /* Dokunmatik ekranlarda daha büyük tıklama alanı */
+    .keyboard-key {
+        touch-action: manipulation; /* Dokunma gecikmesini azalt */
+    }
+
+    /* Tuş basıldığında görsel geri bildirim */
+    .keyboard-key:active {
+        background-color: #555 !important;
+        transform: translateY(2px);
+        transition: all 0.05s ease-in-out;
+    }
+
+    /* Daha belirgin basma efekti */
+    .keyboard-special-key:active {
+        background-color: #444 !important;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    /* Dokunmatik ekranda daha net görünürlük */
+    .key-shift-char,
+    .key-altgr-char {
+        opacity: 0.5 !important; /* Daha az belirgin */
+    }
+
+    /* Tuşlar arası boşluğu artır - yanlış basmaları azaltmak için */
+    .keyboard-row {
+        gap: 5px;
     }
 }
