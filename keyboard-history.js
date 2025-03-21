@@ -61,9 +61,10 @@
     }
 
     // Tarihçe yönetimi fonksiyonları
-    const keyboardHistory = {
+    // Tarihçe modülünü global alana aktar
+    window.keyboardHistory = {
         // Input elemanını izlemeye başla
-        setupInputChangeListener: function(inputElement) {
+        setupInputChangeListener: function (inputElement) {
             if (!inputElement || inputElement.getAttribute('data-history-setup')) {
                 return; // Zaten kurulu veya geçersiz eleman
             }
@@ -85,7 +86,7 @@
             history.currentIndex = 0;
 
             // Input olayını dinle
-            inputElement.addEventListener('input', function(e) {
+            inputElement.addEventListener('input', function (e) {
                 // Yeni durum
                 const newSelection = safelyGetSelection(inputElement);
                 const newState = {
@@ -103,7 +104,7 @@
         },
 
         // Geri alma (Undo) fonksiyonu
-        performUndo: function(inputElement) {
+        performUndo: function (inputElement) {
             if (!inputElement) return false;
 
             const state = window.keyboardState.getState();
@@ -125,7 +126,7 @@
         },
 
         // İleri alma (Redo) fonksiyonu
-        performRedo: function(inputElement) {
+        performRedo: function (inputElement) {
             if (!inputElement) return false;
 
             const state = window.keyboardState.getState();
@@ -147,7 +148,7 @@
         },
 
         // Control+Z işlemi
-        handleControlZ: function(inputElement) {
+        handleControlZ: function (inputElement) {
             try {
                 // Odağı kontrol et
                 inputElement.focus();
@@ -161,7 +162,7 @@
 
                     if (result) {
                         // Input olayını tetikle
-                        const event = new Event('input', { bubbles: true });
+                        const event = new Event('input', {bubbles: true});
                         inputElement.dispatchEvent(event);
                     }
                 }
@@ -173,7 +174,7 @@
 
                 if (undoResult) {
                     // Input olayını tetikle
-                    const event = new Event('input', { bubbles: true });
+                    const event = new Event('input', {bubbles: true});
                     inputElement.dispatchEvent(event);
                 }
             }
@@ -182,7 +183,7 @@
         },
 
         // Control+Y işlemi
-        handleControlY: function(inputElement) {
+        handleControlY: function (inputElement) {
             try {
                 inputElement.focus();
 
@@ -195,7 +196,7 @@
 
                     if (result) {
                         // Input olayını tetikle
-                        const event = new Event('input', { bubbles: true });
+                        const event = new Event('input', {bubbles: true});
                         inputElement.dispatchEvent(event);
                     }
                 }
@@ -207,7 +208,7 @@
 
                 if (redoResult) {
                     // Input olayını tetikle
-                    const event = new Event('input', { bubbles: true });
+                    const event = new Event('input', {bubbles: true});
                     inputElement.dispatchEvent(event);
                 }
             }
@@ -215,7 +216,4 @@
             return true;
         }
     };
-
-    // Tarihçe modülünü global alana aktar
-    window.keyboardHistory = keyboardHistory;
 })();
