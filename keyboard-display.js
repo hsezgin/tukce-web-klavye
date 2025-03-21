@@ -165,9 +165,23 @@
                     // Harfler için büyük/küçük harfi düzenle
                     else if (originalKey.match(/[a-zçğıöşü]/i)) {
                         if (state.isCapsActive) {
-                            key.textContent = originalKey.toLowerCase();
+                            // Türkçe i/I karakteri kontrolü
+                            if (originalKey.toLowerCase() === 'i') {
+                                key.textContent = 'i';
+                            } else if (originalKey.toLowerCase() === 'ı') {
+                                key.textContent = 'ı';
+                            } else {
+                                key.textContent = originalKey.toLowerCase();
+                            }
                         } else {
-                            key.textContent = originalKey.toUpperCase();
+                            // Türkçe i/I karakteri kontrolü
+                            if (originalKey.toLowerCase() === 'i') {
+                                key.textContent = 'İ';
+                            } else if (originalKey.toLowerCase() === 'ı') {
+                                key.textContent = 'I';
+                            } else {
+                                key.textContent = originalKey.toUpperCase();
+                            }
                         }
                     } else {
                         // Diğer karakterler için normal görünüm
@@ -179,7 +193,11 @@
                     // Ana karakteri ekle
                     const mainText = document.createTextNode(
                         state.isCapsActive && originalKey.match(/[a-zçğıöşü]/i)
-                            ? originalKey.toUpperCase()
+                            ? (originalKey.toLowerCase() === 'i'
+                                ? 'İ'
+                                : (originalKey.toLowerCase() === 'ı'
+                                    ? 'I'
+                                    : originalKey.toUpperCase()))
                             : originalKey.toLowerCase()
                     );
 

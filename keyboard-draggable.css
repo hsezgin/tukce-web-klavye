@@ -1,11 +1,12 @@
 /* keyboard-draggable.css - Klavye başlık çubuğu ve sürükleme özellikleri için CSS */
+/* Header'ın kendisini de düzenleyelim */
 .keyboard-header {
     background-color: #222;
     border-radius: 6px 6px 0 0;
     padding: 5px 10px;
     margin-bottom: 8px;
     display: flex;
-    justify-content: center; /* Ortalama için değiştirildi */
+    justify-content: flex-start; /* justify-content: center yerine flex-start */
     align-items: center;
     user-select: none;
     border-bottom: 1px solid #444;
@@ -16,12 +17,12 @@
     font-size: 16px;
     font-weight: 500;
     min-height: 24px;
-    text-align: center;
+    text-align: left;  /* text-align: center yerine left */
     width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 0 10px;
+    padding: 0 10px 0 15px; /* Sağ ve sol padding'i ayarladık, sol padding'i artırdık */
 }
 
 /* Butonlar kaldırıldı */
@@ -34,4 +35,37 @@
 .pin-icon, .minimize-icon, .maximize-icon {
     font-style: normal;
     line-height: 1;
+}
+/* Yanıp sönen imleç animasyonu */
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* İmleç stili */
+.keyboard-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 16px;
+    background-color: #fff;
+    vertical-align: middle;
+    margin-left: 2px;
+    animation: blink 1s infinite;
+}
+
+/* Başlık içindeki metin için gelişmiş stil */
+.keyboard-title {
+    color: #ddd;
+    font-size: 16px;
+    font-weight: 500;
+    min-height: 24px;
+    text-align: left;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 10px 0 15px;
+    display: flex;
+    align-items: center;
 }

@@ -762,15 +762,6 @@
             }
 
             // Ok tuşları
-            if (key === 'ArrowLeft') {
-                this.handleCursorMovement('left', inputElement);
-                return;
-            }
-
-            if (key === 'ArrowRight') {
-                this.handleCursorMovement('right', inputElement);
-                return;
-            }
 
             if (key === 'ArrowUp') {
                 this.handleCursorMovement('up', inputElement);
@@ -845,6 +836,7 @@
                 window.keyboardDisplay.updateKeyDisplay();
             }
             // Shift aktifken
+            // Shift aktifken
             else if (state.isShiftActive) {
                 if ('1234567890*-,.'.includes(key)) {
                     const shiftChar = charMaps.getShiftChar(key);
@@ -855,10 +847,24 @@
                     // Shift + Harf durumu: Caps Lock aktifse küçük, değilse büyük yaz
                     if (state.isCapsActive) {
                         // Caps Lock açıkken Shift'e basılırsa küçük harf yaz
-                        charToInsert = key.toLowerCase();
+                        // Türkçe karakter kontrolü
+                        if (key.toLowerCase() === 'i') {
+                            charToInsert = 'i';  // Küçük i
+                        } else if (key.toLowerCase() === 'ı') {
+                            charToInsert = 'ı';  // Küçük ı
+                        } else {
+                            charToInsert = key.toLowerCase();
+                        }
                     } else {
                         // Caps Lock kapalıyken Shift'e basılırsa büyük harf yaz
-                        charToInsert = key.toUpperCase();
+                        // Türkçe karakter kontrolü
+                        if (key.toLowerCase() === 'i') {
+                            charToInsert = 'İ';  // Büyük İ
+                        } else if (key.toLowerCase() === 'ı') {
+                            charToInsert = 'I';  // Büyük I
+                        } else {
+                            charToInsert = key.toUpperCase();
+                        }
                     }
                 }
 
@@ -869,7 +875,14 @@
             // Caps Lock aktifken harfler
             else if (state.isCapsActive && key.match(/[a-zçğıöşü]/i)) {
                 // Caps Lock açıkken harfler her zaman büyük
-                charToInsert = key.toUpperCase();
+                // Türkçe karakter kontrolü
+                if (key.toLowerCase() === 'i') {
+                    charToInsert = 'İ';  // Büyük İ
+                } else if (key.toLowerCase() === 'ı') {
+                    charToInsert = 'I';  // Büyük I
+                } else {
+                    charToInsert = key.toUpperCase();
+                }
             }
 
             // Metni doğrudan manipüle et
