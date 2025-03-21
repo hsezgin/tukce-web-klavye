@@ -30,6 +30,66 @@
 
         return true; // Diğer türler (text, search, tel, url, password) genelde destekler
     }
+    // Türkçe karakter dönüşüm fonksiyonları
+    const turkceKarakter = {
+        // Küçük harften büyük harfe dönüşüm (Türkçe kurallarına göre)
+        buyukHarf: function(karakter) {
+            const turkceKucukBuyuk = {
+                'i': 'İ',
+                'ı': 'I'
+            };
+
+            // Eğer karakter Türkçe'ye özgü ise ona göre dönüştür
+            if (turkceKucukBuyuk[karakter]) {
+                return turkceKucukBuyuk[karakter];
+            }
+
+            // Değilse JavaScript'in standart dönüşümünü kullan
+            return karakter.toUpperCase();
+        },
+
+        // Büyük harften küçük harfe dönüşüm (Türkçe kurallarına göre)
+        kucukHarf: function(karakter) {
+            const turkceBuyukKucuk = {
+                'İ': 'i',
+                'I': 'ı'
+            };
+
+            // Eğer karakter Türkçe'ye özgü ise ona göre dönüştür
+            if (turkceBuyukKucuk[karakter]) {
+                return turkceBuyukKucuk[karakter];
+            }
+
+            // Değilse JavaScript'in standart dönüşümünü kullan
+            return karakter.toLowerCase();
+        },
+
+        // Bir metinde büyük/küçük harf dönüşümünü Türkçe'ye uygun yapar
+        buyukMetin: function(metin) {
+            if (!metin) return '';
+            let sonuc = '';
+            for (let i = 0; i < metin.length; i++) {
+                sonuc += this.buyukHarf(metin[i]);
+            }
+            return sonuc;
+        },
+
+        kucukMetin: function(metin) {
+            if (!metin) return '';
+            let sonuc = '';
+            for (let i = 0; i < metin.length; i++) {
+                sonuc += this.kucukHarf(metin[i]);
+            }
+            return sonuc;
+        },
+
+        // Bir metnin ilk harfini büyütür (Türkçe'ye uygun)
+        basHarfBuyut: function(metin) {
+            if (!metin || metin.length === 0) return '';
+            return this.buyukHarf(metin[0]) + metin.slice(1);
+        }
+    };
+
 
     // Selection işlemini güvenli bir şekilde uygula
     function safelySetSelection(inputElement, startPos, endPos) {
@@ -414,7 +474,6 @@
                     this.uzunBasmaAyarla(event.currentTarget, silmeIslemi);
                     return true;
 
-
                 case 'Tab':
                     // Shift tuşu basılıysa bir önceki forma git
                     const state = window.keyboardState.getState();
@@ -499,6 +558,7 @@
                         window.keyboardEditMenu.toggleEditMenu();
                     }
                     return true;
+
                 case 'ArrowLeft':
 
                     // Sol ok işlevi
@@ -629,6 +689,16 @@
 
                     // Uzun basma özelliğini ekle
                     this.uzunBasmaAyarla(event.currentTarget, asagiOkIslemi);
+                    return true;
+
+                // Büyük-küçük harf dönüşümü için
+                case 'CapsLock':
+                    // CapsLock durumunu değiştir
+                    const capsLockActive = !window.keyboardState.isCapsLockActive();
+                    window.keyboardState.setCapsLockActive(capsLockActive);
+
+                    // Klavye tuşlarının görünümünü güncelle
+                    window.keyboardDisplay.updateKeysDisplay();
                     return true;
 
 
