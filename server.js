@@ -10,7 +10,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static('.'));
+app.use(express.static(__dirname));
+
+// Root endpoint için özel yanıt
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/popup.html');
+});
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`Test server running on port ${port}`);
