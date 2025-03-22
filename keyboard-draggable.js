@@ -1,5 +1,5 @@
+
 // keyboard-draggable.js - Türkçe Web Klavyesi - Sürüklenebilir Klavye Modülü
-// manifest.json dosyasına bu dosyayı ekleyin, "js" dizisine: "keyboard-draggable.js"
 (function() {
     // Klavyeyi sürüklenebilir yapan fonksiyonlar
     const keyboardDrag = {
@@ -32,17 +32,13 @@
             const titleElement = document.createElement('div');
             titleElement.className = 'keyboard-title';
             titleElement.textContent = 'Türkçe Klavye';
-            titleElement.id = 'keyboard-display-text';
 
-            // Başlık ve düğmeleri header'a ekle
+            // Başlığı çubuğa ekle
             headerElement.appendChild(titleElement);
 
-            // Artık butonlar olmadığından özel click event'leri de kaldırıldı
-
-            // Başlık çubuğunu elementin başına ekle
-            const keyboard = element.querySelector('.turkish-keyboard');
-            if (keyboard) {
-                element.insertBefore(headerElement, keyboard);
+            // Başlık çubuğunu klavyeye ekle
+            if (element.firstChild) {
+                element.insertBefore(headerElement, element.firstChild);
             } else {
                 element.appendChild(headerElement);
             }
@@ -51,6 +47,6 @@
         }
     };
 
-    // Sürüklenebilir klavye modülünü global alana aktar
+    // Klavye sürükleme modülünü global alana aktar
     window.keyboardDrag = keyboardDrag;
 })();
