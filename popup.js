@@ -1,5 +1,9 @@
 // Popup için gerekli işlevsellik
 document.addEventListener('DOMContentLoaded', function() {
+    // Klavyeyi başlat
+    if (window.keyboardCore && window.keyboardCore.initializeModules) {
+        window.keyboardCore.initializeModules();
+    }
     // Anahtar elementleri seç
     const toggleSwitch = document.getElementById('keyboard-toggle');
     const statusDiv = document.getElementById('status');

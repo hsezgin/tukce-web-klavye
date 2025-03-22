@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Türkçe Web Klavyesi</title>
-    <style>
+    <link rel="stylesheet" href="keyboard.css">
+<link rel="stylesheet" href="keyboard-base.css">
+<link rel="stylesheet" href="keyboard-function-keys.css">
+<link rel="stylesheet" href="keyboard-modifier-keys.css">
+<link rel="stylesheet" href="keyboard-special-chars.css">
+<link rel="stylesheet" href="keyboard-responsive.css">
+<style>
         body {
             font-family: Arial, sans-serif;
             width: 300px;
@@ -138,6 +144,68 @@
     Türkçe karakterleri kolayca kullanabilmeniz için geliştirilmiş web tabanlı klavye. Form alanlarına tıkladığınızda otomatik olarak açılır.
 </div>
 
+<div id="turkish-web-keyboard" class="turkish-keyboard-container">
+    <div class="keyboard-row">
+        <div class="keyboard-key" data-key="1">1</div>
+        <div class="keyboard-key" data-key="2">2</div>
+        <div class="keyboard-key" data-key="3">3</div>
+        <div class="keyboard-key" data-key="4">4</div>
+        <div class="keyboard-key" data-key="5">5</div>
+        <div class="keyboard-key" data-key="6">6</div>
+        <div class="keyboard-key" data-key="7">7</div>
+        <div class="keyboard-key" data-key="8">8</div>
+        <div class="keyboard-key" data-key="9">9</div>
+        <div class="keyboard-key" data-key="0">0</div>
+    </div>
+    <div class="keyboard-row">
+        <div class="keyboard-key" data-key="q">q</div>
+        <div class="keyboard-key" data-key="w">w</div>
+        <div class="keyboard-key" data-key="e">e</div>
+        <div class="keyboard-key" data-key="r">r</div>
+        <div class="keyboard-key" data-key="t">t</div>
+        <div class="keyboard-key" data-key="y">y</div>
+        <div class="keyboard-key" data-key="u">u</div>
+        <div class="keyboard-key" data-key="ı">ı</div>
+        <div class="keyboard-key" data-key="o">o</div>
+        <div class="keyboard-key" data-key="p">p</div>
+        <div class="keyboard-key" data-key="ğ">ğ</div>
+        <div class="keyboard-key" data-key="ü">ü</div>
+    </div>
+    <div class="keyboard-row">
+        <div class="keyboard-key" data-key="a">a</div>
+        <div class="keyboard-key" data-key="s">s</div>
+        <div class="keyboard-key" data-key="d">d</div>
+        <div class="keyboard-key" data-key="f">f</div>
+        <div class="keyboard-key" data-key="g">g</div>
+        <div class="keyboard-key" data-key="h">h</div>
+        <div class="keyboard-key" data-key="j">j</div>
+        <div class="keyboard-key" data-key="k">k</div>
+        <div class="keyboard-key" data-key="l">l</div>
+        <div class="keyboard-key" data-key="ş">ş</div>
+        <div class="keyboard-key" data-key="i">i</div>
+    </div>
+    <div class="keyboard-row">
+        <div class="keyboard-key" data-key="z">z</div>
+        <div class="keyboard-key" data-key="x">x</div>
+        <div class="keyboard-key" data-key="c">c</div>
+        <div class="keyboard-key" data-key="v">v</div>
+        <div class="keyboard-key" data-key="b">b</div>
+        <div class="keyboard-key" data-key="n">n</div>
+        <div class="keyboard-key" data-key="m">m</div>
+        <div class="keyboard-key" data-key="ö">ö</div>
+        <div class="keyboard-key" data-key="ç">ç</div>
+    </div>
+    <div class="keyboard-row">
+        <div class="keyboard-key keyboard-special-key" data-key="Space">Boşluk</div>
+    </div>
+</div>
+
+<script src="keyboard-state.js"></script>
+<script src="charmaps.js"></script>
+<script src="keyboard-main.js"></script>
+<script src="keyboard-display.js"></script>
+<script src="keyboard-input.js"></script>
+<script src="keyboard-ui.js"></script>
 <script src="popup.js"></script>
 </body>
 </html>
