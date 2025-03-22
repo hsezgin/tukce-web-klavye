@@ -1,4 +1,4 @@
-/* Ana konteyner stilleri */
+/* Ana konteyner stilleri - spesifik seçiciler */
 .turkish-keyboard-container {
     display: none;
     width: 100%; /* Ekran genişliğine göre tam genişlik */
@@ -63,8 +63,8 @@
     border-radius: 25px !important;
 }
 
-/* Temel tuş stilleri */
-.keyboard-key {
+/* Teül tuş stilleri - spesifik seçiciler */
+.turkish-keyboard-container .keyboard-key {
     min-width: 60px; /* Daha geniş tuşlar */
     height: 60px; /* Daha yüksek tuşlar */
     display: flex;
@@ -88,19 +88,19 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Hafif 3D görünüm */
 }
 
-.keyboard-key:hover {
+.turkish-keyboard-container .keyboard-key:hover {
     background-color: #4a4a4a;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
 }
 
-.keyboard-key:active {
+.turkish-keyboard-container .keyboard-key:active {
     background-color: #666;
     transform: translateY(2px);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Özel tuş stilleri */
-.keyboard-special-key {
+.turkish-keyboard-container .keyboard-special-key {
     background-color: #1e1e1e;
     color: #fff;
     font-weight: bold;

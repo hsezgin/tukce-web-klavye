@@ -8,6 +8,14 @@
         inputText: '',
         maxDisplayLength: 100, // Gösterilecek maksimum karakter sayısı
         cursorPosition: 0,     // İmleç pozisyonu (kaçıncı karakterden sonra)
+        
+        // Son işlemleri takip eden değişkenler
+        lastUpdateTime: 0,     // Son güncelleme zamanı
+        updateThrottle: 100,   // Güncellemeler arası minimum süre (ms)
+        pendingUpdate: false,  // Bekleyen güncelleme var mı?
+        
+        // İmleç hareketi doğrudan klavye tarafından mı yönetiliyor?
+        directCursorControl: false,
 
         // CSS stil ekleyen yardımcı fonksiyon
         addCursorStyle: function() {
@@ -136,7 +144,7 @@
             }
         },
 
-        // İmleç pozisyonunu ayarla
+        // İmleç pozisyonunu ayarla - doğrudan modül tarafından kontrol edilen
         setCursorPosition: function(position, inputElement) {
             if (!inputElement) return;
 
@@ -144,43 +152,34 @@
             const maxPos = inputElement.value ? inputElement.value.length : 0;
             position = Math.max(0, Math.min(position, maxPos));
 
+            // Cursor pozisyonunu sadece gösterilen metinde güncelle - input'a dokunma
             this.cursorPosition = position;
 
-            // Input elementinin imleç pozisyonunu güncelle
-            if (inputElement.setSelectionRange) {
-                try {
-                    inputElement.setSelectionRange(position, position);
-                } catch (e) {
-                    console.warn("Seçim aralığı ayarlanamadı:", e);
-                }
-            }
-
             // Display metnini güncelle
-            this.updateInputText(inputElement);
+            this.updateDisplayText(this.inputText || '');
         },
 
-        // İmleci sola hareket ettir
-        moveCursorLeft: function(inputElement) {
-            if (!inputElement) return;
-
-            // İmleç pozisyonunu bir sola kaydır (0'dan küçük olamaz)
-            const newPosition = Math.max(0, this.cursorPosition - 1);
-            this.setCursorPosition(newPosition, inputElement);
-        },
-
-        // İmleci sağa hareket ettir
-        moveCursorRight: function(inputElement) {
-            if (!inputElement) return;
-
-            // İmleç pozisyonunu bir sağa kaydır (metin uzunluğundan büyük olamaz)
-            const maxPos = inputElement.value ? inputElement.value.length : 0;
-            const newPosition = Math.min(maxPos, this.cursorPosition + 1);
-            this.setCursorPosition(newPosition, inputElement);
-        },
-
-        // Girdi metnini güncelle ve göster
+        // Girdi metnini güncelle ve göster (ana güncelleme fonksiyonu)
         updateInputText: function(inputElement) {
             if (!inputElement) return;
+            
+            // Rate limiting - çok sık güncelleme yapmasını engelle
+            const now = Date.now();
+            if (now - this.lastUpdateTime < this.updateThrottle) {
+                // Eğer çok sık güncelleme yapılıyorsa, mevcut güncellemeyi atla
+                // ve sonraki güncellemeden emin ol
+                if (!this.pendingUpdate) {
+                    this.pendingUpdate = true;
+                    setTimeout(() => {
+                        this.pendingUpdate = false;
+                        this.updateInputText(inputElement);
+                    }, this.updateThrottle);
+                }
+                return;
+            }
+            
+            this.lastUpdateTime = now;
+            this.pendingUpdate = false;
 
             // Eğer input type="password" ise, metin gösterme
             if (inputElement.type === 'password') {
@@ -191,8 +190,8 @@
             // Mevcut texti al
             this.inputText = inputElement.value || '';
 
-            // İmleç pozisyonunu güncelle
-            if (inputElement.selectionStart !== undefined) {
+            // İmleç pozisyonunu güncelle - doğrudan kontrol ediliyor değilse
+            if (!this.directCursorControl && inputElement.selectionStart !== undefined) {
                 try {
                     this.cursorPosition = inputElement.selectionStart;
                 } catch (e) {
@@ -204,20 +203,37 @@
             this.updateDisplayText(this.inputText || '');
         },
 
-        // Yeni karakter ekle
-        addCharacter: function(char, inputElement) {
+        // Yeni API - Ok tuşlarıyla imleç hareketi için 
+        // Bu fonksiyon input'taki imleç hareketinden bağımsızdır
+        moveCursor: function(direction, inputElement) {
             if (!inputElement) return;
-
-            // Metni güncelle
-            this.updateInputText(inputElement);
-        },
-
-        // Karakter sil
-        removeCharacter: function(inputElement) {
-            if (!inputElement) return;
-
-            // Metni güncelle
-            this.updateInputText(inputElement);
+            
+            // İmleç pozisyonunu hesapla
+            let newPosition = this.cursorPosition;
+            const text = inputElement.value || '';
+            
+            // Doğrudan kontrol modunu aktifleştir
+            this.directCursorControl = true;
+            
+            switch (direction) {
+                case 'left':
+                    newPosition = Math.max(0, this.cursorPosition - 1);
+                    break;
+                    
+                case 'right':
+                    newPosition = Math.min(text.length, this.cursorPosition + 1);
+                    break;
+                    
+                // Diğer yön tuşları burada eklenebilir...
+            }
+            
+            // Pozisyonu güncelle - sadece görüntüleme metni için
+            this.setCursorPosition(newPosition, inputElement);
+            
+            // 500ms sonra doğrudan kontrol modunu kapat
+            setTimeout(() => {
+                this.directCursorControl = false;
+            }, 500);
         },
 
         // Yazılan karakteri işle
@@ -233,18 +249,14 @@
             // Özel tuşları işle
             switch (key) {
                 case 'Sil':
-                    // Pozisyon veya içerik değişebilir, güncel metni göster
+                    // Silme işlemi sonrası metni güncelle
                     setTimeout(() => this.updateInputText(inputElement), 50);
                     break;
 
                 case 'ArrowLeft':
-                    // İmleci sola hareket ettir
-                    this.moveCursorLeft(inputElement);
-                    break;
-
                 case 'ArrowRight':
-                    // İmleci sağa hareket ettir
-                    this.moveCursorRight(inputElement);
+                    // Ok tuşları için input değişiklikleri keyboard-input.js'de yapılıyor
+                    // Burada hiçbir işlem yapmamak gerekiyor
                     break;
 
                 case 'Tab':
@@ -252,7 +264,7 @@
                 case 'Boşluk':
                 case 'ArrowUp':
                 case 'ArrowDown':
-                    // Diğer özel tuşlar için mevcut metni göster
+                    // Bu tuşlar sonrası metni ve imleç konumunu güncelle
                     setTimeout(() => this.updateInputText(inputElement), 50);
                     break;
 
@@ -282,27 +294,31 @@
 
         // Kullanıcı arayüzü başlangıcı
         initialize: function() {
-            // Input olaylarını dinle
+            // Input olaylarını dinle - daha az sıklıkla güncelleme yap
             document.addEventListener('input', (e) => {
                 const state = window.keyboardState.getState();
                 if (state && state.currentInput === e.target) {
-                    this.updateInputText(e.target);
+                    // Eğer doğrudan kontrol modundaysak, güncellemeyi atla
+                    if (!this.directCursorControl) {
+                        this.updateInputText(e.target);
+                    }
                 }
             }, true);
 
-            // Selection değişikliklerini izle
+            // Selection değişikliklerini izle - daha az sıklıkla
             document.addEventListener('selectionchange', () => {
-                const state = window.keyboardState.getState();
-                if (state && state.currentInput && document.activeElement === state.currentInput) {
-                    this.updateInputText(state.currentInput);
-                }
+                // Bu olayda yapılacak bir işlem yok, tamamen pasif olarak bırakıyoruz
+                // bu sayede ok tuşu işlemleri sırasında çift güncelleme olmayacak
             });
 
             // Ctrl+X, Ctrl+V gibi işlemleri yakalamak için
             document.addEventListener('keydown', (e) => {
                 const state = window.keyboardState.getState();
                 if (state && state.currentInput) {
-                    setTimeout(() => this.updateInputText(state.currentInput), 50);
+                    // Eğer doğrudan kontrol modunda değilsek, güncellemeyi yap
+                    if (!this.directCursorControl) {
+                        setTimeout(() => this.updateInputText(state.currentInput), 50);
+                    }
                 }
             }, true);
 

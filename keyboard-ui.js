@@ -1,9 +1,38 @@
 // Türkçe Web Klavyesi - Arayüz İşlemleri
 (function() {
+    // Event listenerları yönetmek için konteyner
+    const eventListeners = [];
+    
+    // Güvenli event listener ekleme
+    function addSafeEventListener(element, event, callback, options) {
+        if (!element) {
+            console.warn(`Event listener eklenirken null element hatası: ${event}`);
+            return;
+        }
+        
+        element.addEventListener(event, callback, options);
+        eventListeners.push({ element, event, callback });
+    }
+    
+    // Event listener temizleme
+    function cleanupEventListeners() {
+        eventListeners.forEach(({ element, event, callback }) => {
+            try {
+                if (element) {
+                    element.removeEventListener(event, callback);
+                }
+            } catch (e) {
+                console.warn(`Event listener temizlenirken hata: ${e.message}`);
+            }
+        });
+        eventListeners.length = 0;
+    }
+    
     // Dışa aktarılacak UI fonksiyonları
     const keyboardUI = {
         createKeyboardElement,
-        positionKeyboard
+        positionKeyboard,
+        cleanupEventListeners
     };
 
     // Klavyeyi konumlandır
@@ -43,8 +72,15 @@
                 keyboardElement.style.opacity = "0";
                 keyboardElement.style.display = "block";
 
-                keyboardHeight = keyboardElement.offsetHeight || 320;
-                keyboardWidth = keyboardElement.offsetWidth || 900;
+                // Yeni değerler
+                try {
+                    keyboardHeight = keyboardElement.offsetHeight || 320;
+                    keyboardWidth = keyboardElement.offsetWidth || 900;
+                } catch (innerError) {
+                    console.warn("Klavye boyutları ölçülürken hata:", innerError);
+                    keyboardHeight = 320;
+                    keyboardWidth = 900;
+                }
 
                 // Geri al
                 keyboardElement.style.opacity = originalOpacity;
@@ -192,7 +228,11 @@
                 // Tuş tıklama olayına olay yayılmasını durdurma özelliği ekle
                 keyElement.addEventListener('click', function(e) {
                     e.stopPropagation(); // Tıklama olayının belgeye ulaşmasını engelle
-                    window.keyboardInput.handleKeyPress(keyText);
+                    try {
+                        window.keyboardInput.handleKeyPress(keyText);
+                    } catch (error) {
+                        console.warn(`Tuş tıklama işleminde hata: ${error.message}`);
+                    }
                 });
 
                 rowElement.appendChild(keyElement);
@@ -207,7 +247,11 @@
                 rightShiftElement.type = 'button';
                 rightShiftElement.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    window.keyboardInput.handleKeyPress('Shift');
+                    try {
+                        window.keyboardInput.handleKeyPress('Shift');
+                    } catch (error) {
+                        console.warn(`Sağ Shift tuşu işleminde hata: ${error.message}`);
+                    }
                 });
                 rowElement.appendChild(rightShiftElement);
             }
@@ -231,7 +275,11 @@
         controlButton.type = 'button';
         controlButton.addEventListener('click', function(e) {
             e.stopPropagation();
-            window.keyboardInput.handleKeyPress('Control');
+            try {
+                window.keyboardInput.handleKeyPress('Control');
+            } catch (error) {
+                console.warn(`Control tuşu işleminde hata: ${error.message}`);
+            }
         });
 
         controlContainer.appendChild(controlButton);
@@ -404,6 +452,9 @@
         if (window.keyboardDrag && window.keyboardDrag.makeDraggable) {
             window.keyboardDrag.makeDraggable(keyboardElement);
         }
+
+        // Klavye oluşturma işlemi tamamlandığında temizleme işlemleri için event dinleyicisi ekle
+        window.addEventListener('beforeunload', cleanupEventListeners);
 
         return keyboardElement;
     }

@@ -20,7 +20,11 @@
         // Klavyeyi göster
         showKeyboard: function() {
             if (keyboardEnabled && window.keyboardDisplay) {
-                window.keyboardDisplay.showKeyboard();
+                try {
+                    window.keyboardDisplay.showKeyboard();
+                } catch (e) {
+                    console.error('Klavye gösterilirken hata oluştu:', e);
+                }
             }
         },
 
@@ -94,33 +98,74 @@
         },
 
         // Tüm bağımlı modülleri yükle
+        // Tüm bağımlı modülleri yükle
         initializeModules: function() {
-            // Modüllerin doğru sırayla yüklenip yüklenmediğini kontrol et
-            if (!window.keyboardState) {
-                console.error('keyboard-state.js modülü yüklenemedi!');
+            // Modülleri ve gerekli metodlarını kontrol eden yardımcı fonksiyon
+            function checkModule(moduleName, requiredMethods = []) {
+                const module = window[moduleName];
+
+                if (!module) {
+                    console.error(`${moduleName} modülü bulunamadı!`);
+                    return false;
+                }
+
+                // Eğer metot kontrolü gerekiyorsa
+                if (requiredMethods.length > 0) {
+                    for (const method of requiredMethods) {
+                        if (typeof module[method] !== 'function') {
+                            console.error(`${moduleName} modülünde ${method} metodu bulunamadı!`);
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            // Modülleri doğru sırayla kontrol et - bağımlılık sırasına göre
+
+            // Önce temel modüller
+            if (!checkModule('keyboardState', ['getState', 'setCurrentInput', 'resetModifierKeys'])) {
                 return false;
             }
 
-            if (!window.keyboardHistory) {
-                console.error('keyboard-history.js modülü yüklenemedi!');
+            if (!checkModule('turkishKeyboardCharMaps', ['getShiftChar', 'getAltGrChar'])) {
                 return false;
             }
 
-            if (!window.keyboardDisplay) {
-                console.error('keyboard-display.js modülü yüklenemedi!');
+            // Ardından temel modüllere bağımlı olanlar
+            if (!checkModule('keyboardHistory', ['setupInputChangeListener', 'handleControlZ'])) {
                 return false;
             }
 
-            if (!window.keyboardInput) {
-                console.error('keyboard-input.js modülü yüklenemedi!');
+            if (!checkModule('keyboardInput', ['handleKeyPress', 'setupFormElementListeners'])) {
                 return false;
             }
 
-            if (!window.keyboardUI) {
-                console.error('keyboard-ui.js modülü yüklenemedi!');
+            // UI ve görüntüleme modülleri
+            if (!checkModule('keyboardUI', ['createKeyboardElement', 'positionKeyboard'])) {
                 return false;
             }
 
+            if (!checkModule('keyboardDisplay', ['showKeyboard', 'hideKeyboard', 'updateKeyDisplay'])) {
+                return false;
+            }
+
+            // Opsiyonel - varsa kontrol et
+            if (!checkModule('keyboardEditMenu', ['createEditMenu', 'hideEditMenu'])) {
+                return false;
+            }
+
+            if (!checkModule('keyboardDrag', ['makeDraggable'])) {
+                return false;
+            }
+
+            if (!checkModule('keyboardDisplayText', ['updateInputText'])) {
+                console.warn('keyboardDisplayText modülü yüklenemedi, başlıkta metin görüntüleme devre dışı kalacak.');
+                // Bu modülü opsiyonel kabul edebiliriz, false döndürmeye gerek yok
+            }
+
+            console.log('Tüm modüller başarıyla yüklendi.');
             return true;
         }
     };
@@ -159,10 +204,56 @@
         });
     }
 
+    // Tüm event listenerları yönetmek için konteyner
+    const eventListeners = [];
+    
+    // Güvenli event listener ekleme
+    function addSafeEventListener(element, event, callback, options) {
+        if (!element) {
+            console.warn(`Event listener eklenirken null element hatası: ${event}`);
+            return;
+        }
+        
+        element.addEventListener(event, callback, options);
+        eventListeners.push({ element, event, callback });
+    }
+    
+    // Event listener temizleme
+    function cleanupEventListeners() {
+        eventListeners.forEach(({ element, event, callback }) => {
+            try {
+                if (element) {
+                    element.removeEventListener(event, callback);
+                }
+            } catch (e) {
+                console.warn(`Event listener temizlenirken hata: ${e.message}`);
+            }
+        });
+        eventListeners.length = 0;
+    }
+    
+    // Browser API işlemlerini güvenli kullanma
+    function safelyExecute(operation, fallback) {
+        try {
+            return operation();
+        } catch (e) {
+            console.warn(`İşlem sırasında hata: ${e.message}`);
+            if (typeof fallback === 'function') {
+                return fallback();
+            }
+            return null;
+        }
+    }
+    
     // Özel karakterleri yeniden ekleyen yardımcı fonksiyon
     function createShiftAndAltGrChars() {
         const charMaps = window.turkishKeyboardCharMaps || {};
         const keys = document.querySelectorAll('.keyboard-key');
+        
+        if (!keys || keys.length === 0) {
+            console.warn('Klavye tuşları bulunamadı, özel karakterler eklenemedi');
+            return;
+        }
 
         keys.forEach(key => {
             const keyText = key.getAttribute('data-key');
@@ -295,36 +386,50 @@
         }
 
         // Tarayıcı kesme işlemlerini engelle (klavye görünür olduğunda)
-        document.addEventListener('cut', function(e) {
+        addSafeEventListener(document, 'cut', function(e) {
             const state = keyboardCore.getState();
-            if (state.isKeyboardVisible && !e.target.matches('input, textarea')) {
+            if (state && state.isKeyboardVisible && !e.target.matches('input, textarea')) {
                 e.preventDefault();
             }
         });
 
         // Tarayıcı kopyalama işlemlerini engelle (klavye görünür olduğunda)
-        document.addEventListener('copy', function(e) {
+        addSafeEventListener(document, 'copy', function(e) {
             const state = keyboardCore.getState();
-            if (state.isKeyboardVisible && !e.target.matches('input, textarea')) {
+            if (state && state.isKeyboardVisible && !e.target.matches('input, textarea')) {
                 e.preventDefault();
             }
         });
 
         // Tarayıcı yapıştırma işlemlerini engelle (klavye görünür olduğunda)
-        document.addEventListener('paste', function(e) {
+        addSafeEventListener(document, 'paste', function(e) {
             const state = keyboardCore.getState();
-            if (state.isKeyboardVisible && !e.target.matches('input, textarea')) {
+            if (state && state.isKeyboardVisible && !e.target.matches('input, textarea')) {
                 e.preventDefault();
             }
         });
     }
 
+    // Klavye gizlendiğinde event listenerları temizle
+    const originalHideKeyboard = keyboardCore.hideKeyboard;
+    keyboardCore.hideKeyboard = function() {
+        if (window.keyboardDisplay) {
+            window.keyboardDisplay.hideKeyboard();
+            cleanupEventListeners();
+        }
+    };
+    
+    // Sayfa kapatıldığında temizlik yap
+    addSafeEventListener(window, 'beforeunload', function() {
+        cleanupEventListeners();
+    });
+    
     // Sayfa yüklendiğinde başlat
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            init();
+        addSafeEventListener(document, 'DOMContentLoaded', function() {
+            safelyExecute(init);
         });
     } else {
-        init();
+        safelyExecute(init);
     }
 })();

@@ -1,39 +1,39 @@
 /* Shift tuşu stili */
-.keyboard-shift-btn {
+.turkish-keyboard-container .keyboard-shift-btn {
     width: 100px !important;
     color: #ffcc00 !important;
 }
 
-.keyboard-key[data-key="Shift"] {
+.turkish-keyboard-container .keyboard-key[data-key="Shift"] {
     color: #ffcc00 !important;
 }
 
-.keyboard-key[data-key="Shift"]:hover,
-.keyboard-shift-btn:hover {
+.turkish-keyboard-container .keyboard-key[data-key="Shift"]:hover,
+.turkish-keyboard-container .keyboard-shift-btn:hover {
     background-color: #4a4a4a;
     color: #fff !important;
 }
 
-.keyboard-key[data-key="Shift"].keyboard-active,
-.keyboard-shift-btn.keyboard-active {
+.turkish-keyboard-container .keyboard-key[data-key="Shift"].keyboard-active,
+.turkish-keyboard-container .keyboard-shift-btn.keyboard-active {
     background-color: #9e8a00 !important;
     color: #ffcc00 !important;
 }
 
-.keyboard-row:nth-child(4) .keyboard-shift-btn:last-child {
+.turkish-keyboard-container .keyboard-row:nth-child(4) .keyboard-shift-btn:last-child {
     margin-left: 10px;
     width: 100px !important;
 }
 
 /* Caps Lock tuşu stili */
-.keyboard-key[data-key="Caps"].keyboard-active {
+.turkish-keyboard-container .keyboard-key[data-key="Caps"].keyboard-active {
     text-transform: uppercase !important;
     background-color: #6a8759 !important;
     color: white !important;
     font-weight: bold !important;
 }
 
-.keyboard-key[data-key="Caps"]::after {
+.turkish-keyboard-container .keyboard-key[data-key="Caps"]::after {
     content: "";
     position: absolute;
     top: 5px;
@@ -44,7 +44,7 @@
     background-color: #444;
 }
 
-.keyboard-key[data-key="Caps"].keyboard-active::after {
+.turkish-keyboard-container .keyboard-key[data-key="Caps"].keyboard-active::after {
     background-color: #6eeb6e;
     box-shadow: 0 0 5px #6eeb6e;
 }
