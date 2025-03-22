@@ -11,6 +11,10 @@
     <link rel="stylesheet" href="../keyboard-modifier-keys.css">
     <link rel="stylesheet" href="../keyboard-special-chars.css">
     <link rel="stylesheet" href="../keyboard-responsive.css">
+    <link rel="stylesheet" href="../keyboard-browser-compatibility.css">
+    <link rel="stylesheet" href="../keyboard-control.css">
+    <link rel="stylesheet" href="../keyboard-navigation.css">
+    <link rel="stylesheet" href="../keyboard-draggable.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -53,7 +57,18 @@
     <script src="../keyboard-history.js"></script>
     <script src="../keyboard-input.js"></script>
     <script src="../keyboard-ui.js"></script>
+    <script src="../keyboard-draggable.js"></script>
+    <script src="../keyboard-edit-menu.js"></script>
     <script src="../keyboard-display.js"></script>
+    <script src="../keyboard-display-module.js"></script>
     <script src="../keyboard-main.js"></script>
+    <script>
+        // Klavyeyi başlat
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.keyboardCore) {
+                window.keyboardCore.setupFormElementListeners();
+            }
+        });
+    </script>
 </body>
 </html>
