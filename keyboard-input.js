@@ -792,14 +792,25 @@
             if (!inputElement) return;
             
             // Son basılan tuşu ve zamanı kaydet - çift işlemi engellemek için
-            // Aynı tuşa 150ms içinde tekrar basılırsa işlemi engelle
+            // Aynı tuşa 200ms içinde tekrar basılırsa işlemi engelle
             const now = Date.now();
-            if (this.lastProcessedKey === key && (now - this.lastKeyPressTime) < 150) {
+            if (this.lastProcessedKey === key && (now - this.lastKeyPressTime) < 200) {
                 // Çok hızlı çift tuş basmasını engelle
                 return;
             }
+            // İşlem tamamlandıktan sonra son tuş ve zamanı güncelle
             this.lastProcessedKey = key;
             this.lastKeyPressTime = now;
+
+            // Özel tuşlar için ek kontrol
+            if (key === 'Sil' || key === 'ArrowLeft' || key === 'ArrowRight' || 
+                key === 'ArrowUp' || key === 'ArrowDown') {
+                // Özel tuşlar için daha uzun bekleme süresi
+                if ((now - this.lastSpecialKeyTime) < 250) {
+                    return;
+                }
+                this.lastSpecialKeyTime = now;
+            }
 
             // Yazılan metni başlık bölümünde göster
             if (window.keyboardDisplayText && inputElement) {
