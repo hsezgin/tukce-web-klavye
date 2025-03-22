@@ -11,6 +11,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(__dirname));
+app.use('/test', express.static(__dirname + '/test'));
 
 // Root endpoint için özel yanıt
 app.get('/', (req, res) => {

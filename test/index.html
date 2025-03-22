@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türkçe Klavye Test</title>
+    <link rel="stylesheet" href="../keyboard.css">
+    <link rel="stylesheet" href="../keyboard-base.css">
+    <link rel="stylesheet" href="../keyboard-function-keys.css">
+    <link rel="stylesheet" href="../keyboard-modifier-keys.css">
+    <link rel="stylesheet" href="../keyboard-special-chars.css">
+    <link rel="stylesheet" href="../keyboard-responsive.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Türkçe Klavye Test Formu</h1>
+    <form id="testForm">
+        <div class="form-group">
+            <label for="name">Adınız:</label>
+            <input type="text" id="name" name="name">
+        </div>
+        <div class="form-group">
+            <label for="email">E-posta:</label>
+            <input type="email" id="email" name="email">
+        </div>
+        <div class="form-group">
+            <label for="message">Mesajınız:</label>
+            <textarea id="message" name="message" rows="4"></textarea>
+        </div>
+    </form>
+
+    <script src="../charmaps.js"></script>
+    <script src="../keyboard-state.js"></script>
+    <script src="../keyboard-history.js"></script>
+    <script src="../keyboard-input.js"></script>
+    <script src="../keyboard-ui.js"></script>
+    <script src="../keyboard-display.js"></script>
+    <script src="../keyboard-main.js"></script>
+</body>
+</html>
