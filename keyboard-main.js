@@ -160,9 +160,24 @@
                 return false;
             }
 
+            // Görüntüleme metni modülü - kritik bir modül, yüklenme durumunu kontrol et
             if (!checkModule('keyboardDisplayText', ['updateInputText'])) {
-                console.warn('keyboardDisplayText modülü yüklenemedi, başlıkta metin görüntüleme devre dışı kalacak.');
-                // Bu modülü opsiyonel kabul edebiliriz, false döndürmeye gerek yok
+                console.error('keyboardDisplayText modülü yüklenemedi, başlıkta metin görüntüleme çalışmayacak!');
+                // Bu modül kritik işlev gördüğünden sorun oluşturmayacak bir yedek yöntem oluştur
+                window.keyboardDisplayText = {
+                    updateInputText: function(input) {
+                        const displayElement = document.getElementById('keyboard-display-text');
+                        if (displayElement) {
+                            // Basit bir görüntüleme - sadece metni göster
+                            displayElement.textContent = input && input.value ? input.value : 'Türkçe Klavye';
+                        }
+                    },
+                    handleKeyPress: function(key, input) {
+                        this.updateInputText(input);
+                    }
+                };
+                console.log('Yedek görüntüleme metni modülü oluşturuldu');
+                // Geçici bir çözüm olduğu için false döndürme - devam etsin
             }
 
             console.log('Tüm modüller başarıyla yüklendi.');

@@ -146,6 +146,38 @@
             });
         },
 
+        // Çift tepkiyi önlerken uzun basılmayı destekleyen genel tuş işleyici
+        handleKeyWithLongPress: function(key, inputElement, actionFunction, event) {
+            // Çift tepki önleme flag dizisini oluştur
+            this._preventDoubleAction = this._preventDoubleAction || {};
+            
+            // Özel tuşa özel flag'i kontrol et
+            if (!this._preventDoubleAction[key]) {
+                // Flag'i aktif et
+                this._preventDoubleAction[key] = true;
+                
+                // Ana işlevi çağır
+                actionFunction(inputElement);
+                
+                // Flag'i sıfırla
+                setTimeout(() => {
+                    this._preventDoubleAction[key] = false;
+                }, 150);
+                
+                // Uzun basma için tuşu ayarla
+                const targetKey = event ? event.currentTarget : null;
+                if (targetKey && !targetKey.getAttribute('data-long-press-setup')) {
+                    // Uzun basma kurulumu yap
+                    this.setupLongPress(targetKey, inputElement, () => actionFunction(inputElement), 80, 350);
+                    
+                    // Tuşun uzun basma kurulumunun yapıldığını işaretle
+                    targetKey.setAttribute('data-long-press-setup', 'true');
+                }
+            }
+            
+            return true;
+        },
+
         // Focus olayı
         onFocus: function (e) {
             // Mevcut input alanını kaydet
@@ -157,9 +189,12 @@
             // Klavyeyi göster
             window.keyboardDisplay.showKeyboard();
 
-            // Bu satırı ekleyin - Input metni hemen göster
+            // Input metni hemen göster
             if (window.keyboardDisplayText) {
-                window.keyboardDisplayText.updateInputText(e.target);
+                // Kısa bir gecikme ile updateInputText metodunu çağır
+                setTimeout(() => {
+                    window.keyboardDisplayText.updateInputText(e.target);
+                }, 10);
             }
 
             // Input alanının eventlerini özelleştir
@@ -352,34 +387,31 @@
             }
         },
 
-        // Uzun basma işlevi için yardımcı fonksiyon - tüm tuşlara eklenebilecek şekilde tasarlandı
-        setupLongPress: function(key, inputElement, actionFunction, interval = 100, delay = 400) {
+        // Uzun basma işlevi için basitleştirilmiş yardımcı fonksiyon
+        setupLongPress: function(key, inputElement, actionFunction, interval = 80, delay = 300) {
             if (!key || !inputElement || !actionFunction) return;
             
-            // Eğer bu tuş için zaten ayarlanmışsa tekrar ayarlama
-            if (key.hasAttribute('data-long-press-setup')) return;
+            // Parola alanı için daha hızlı parametreler
+            if (inputElement.type === 'password') {
+                interval = 50;  // Daha hızlı tekrarlama süresi
+                delay = 200;    // Daha kısa başlangıç gecikmesi
+            }
             
             // Bu tuşa uzun basma ayarlandığını işaretle
             key.setAttribute('data-long-press-setup', 'true');
             
             // Mouse down - basma başladığında
-            key.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Tuşu basılı tutma görünümü için class ekle
-                key.classList.add('keyboard-key-pressed');
-                
-                // Başlangıçta bir kez çalıştır
-                actionFunction(inputElement);
-                
+            const handleMouseDown = function(e) {
                 // Uzun basılı tutma durumunda belirli bir gecikme sonrası tekrar başlat
                 key.longPressTimer = setTimeout(function() {
                     key.interval = setInterval(function() {
                         actionFunction(inputElement);
                     }, interval); // Belirlenen aralıklarla çalıştır (ms)
                 }, delay); // Belirlenen gecikme sonrası başlat (ms)
-            });
+                
+                // Tuşu basılı tutma görünümü için class ekle
+                key.classList.add('keyboard-key-pressed');
+            };
             
             // Temizleme fonksiyonu
             const clearTimers = function() {
@@ -393,29 +425,27 @@
                 key.interval = null;
             };
             
-            // Mouse up ve leave olayları için temizleme fonksiyonunu ayarla
+            // Mevcut dinleyicileri temizle ve yenilerini ekle
+            key.removeEventListener('mousedown', key.oldMouseDownHandler);
+            key.removeEventListener('mouseup', key.oldMouseUpHandler);
+            key.removeEventListener('mouseleave', key.oldMouseLeaveHandler);
+            key.removeEventListener('touchstart', key.oldTouchStartHandler);
+            key.removeEventListener('touchend', key.oldTouchEndHandler);
+            key.removeEventListener('touchcancel', key.oldTouchCancelHandler);
+            
+            // Yeni dinleyicileri kaydet
+            key.oldMouseDownHandler = handleMouseDown;
+            key.oldMouseUpHandler = clearTimers;
+            key.oldMouseLeaveHandler = clearTimers;
+            key.oldTouchStartHandler = handleMouseDown;
+            key.oldTouchEndHandler = clearTimers;
+            key.oldTouchCancelHandler = clearTimers;
+            
+            // Yeni dinleyicileri ekle
+            key.addEventListener('mousedown', handleMouseDown);
             key.addEventListener('mouseup', clearTimers);
             key.addEventListener('mouseleave', clearTimers);
-            
-            // Mobil dokunmatik ekran desteği
-            key.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Tuşu basılı tutma görünümü için class ekle
-                key.classList.add('keyboard-key-pressed');
-                
-                // Başlangıçta bir kez çalıştır
-                actionFunction(inputElement);
-                
-                // Uzun basılı tutma durumunda belirli bir gecikme sonrası tekrar başlat
-                key.longPressTimer = setTimeout(function() {
-                    key.interval = setInterval(function() {
-                        actionFunction(inputElement);
-                    }, interval); // Belirlenen aralıklarla çalıştır (ms)
-                }, delay); // Belirlenen gecikme sonrası başlat (ms)
-            });
-            
+            key.addEventListener('touchstart', handleMouseDown);
             key.addEventListener('touchend', clearTimers);
             key.addEventListener('touchcancel', clearTimers);
         },
@@ -431,11 +461,35 @@
 
             switch (key) {
                 case 'Sil':
-                    // Silme işlevi - çift silmeyi önlemek için
-                    {
-                        const text = inputElement.value;
-                        const selStart = inputElement.selectionStart;
-                        const selEnd = inputElement.selectionEnd;
+                    // Silme işlevi
+                    const silmeIslemi = (inputElem) => {
+                        const text = inputElem.value;
+                        const selStart = inputElem.selectionStart;
+                        const selEnd = inputElem.selectionEnd;
+                        
+                        // Şifre alanı için ekstra hızlı işlem - ön bellekleme
+                        if (inputElem.type === 'password' && this._lastPasswordLength !== undefined) {
+                            // Eğer bir önceki uzunluğu biliyorsak, doğrudan yeni uzunluğa geçebiliriz
+                            const currentLength = text.length;
+                            if (currentLength > 0 && currentLength === this._lastPasswordLength) {
+                                inputElem.value = text.slice(0, -1); // Son karakteri sil
+                                inputElem.selectionStart = inputElem.selectionEnd = currentLength - 1;
+                                
+                                // Input olayını tetikle
+                                const event = new Event('input', {bubbles: true});
+                                inputElem.dispatchEvent(event);
+                                
+                                // Yeni uzunluğu kaydet
+                                this._lastPasswordLength = currentLength - 1;
+                                
+                                // Görüntülemeyi güncelle
+                                if (window.keyboardDisplayText) {
+                                    window.keyboardDisplayText.updateInputText(inputElem);
+                                }
+                                
+                                return; // Hızlı yoldan işlemi tamamla
+                            }
+                        }
                         
                         // Yeni değeri önceden hesapla
                         let newValue;
@@ -445,57 +499,17 @@
                                 newValue = text.slice(0, selStart - 1) + text.slice(selEnd);
                                 
                                 // Mevcut değerden farklıysa güncelle
-                                if (newValue !== inputElement.value) {
+                                if (newValue !== inputElem.value) {
                                     // Değeri değiştir ve imleci konumlandır
-                                    inputElement.value = newValue;
-                                    inputElement.selectionStart = inputElement.selectionEnd = selStart - 1;
-                                    
-                                    // Görüntülemeyi güncelle
-                                    if (window.keyboardDisplayText) {
-                                        window.keyboardDisplayText.updateInputText(inputElement);
-                                    }
-                                    
-                                    // Input olayını tetikle
-                                    const event = new Event('input', {bubbles: true});
-                                    inputElement.dispatchEvent(event);
-                                }
-                            }
-                        } else {
-                            // Seçili metni sil
-                            newValue = text.slice(0, selStart) + text.slice(selEnd);
-                            
-                            // Mevcut değerden farklıysa güncelle
-                            if (newValue !== inputElement.value) {
-                                inputElement.value = newValue;
-                                inputElement.selectionStart = inputElement.selectionEnd = selStart;
-                                
-                                // Görüntülemeyi güncelle
-                                if (window.keyboardDisplayText) {
-                                    window.keyboardDisplayText.updateInputText(inputElement);
-                                }
-                                
-                                // Input olayını tetikle
-                                const event = new Event('input', {bubbles: true});
-                                inputElement.dispatchEvent(event);
-                            }
-                        }
-                    }
-                    
-                    // Silme tuşuyla ilgili ek işlevleri kurma - örneğin uzun basma
-                    const silKey = event ? event.currentTarget : null;
-                    if (silKey) {
-                        // Silme işlevini tanımla
-                        const silmeIslemiFonksiyonu = (inputElem) => {
-                            const text = inputElem.value;
-                            const selStart = inputElem.selectionStart;
-                            if (selStart > 0) {
-                                // Yeni değeri hesapla
-                                const newValue = text.slice(0, selStart - 1) + text.slice(selStart);
-                                if (newValue !== inputElem.value) { // Değer değiştiyse güncelle
                                     inputElem.value = newValue;
                                     inputElem.selectionStart = inputElem.selectionEnd = selStart - 1;
                                     
-                                    // Görüntülemeyi güncelle
+                                    // Şifre alanı için uzunluğu kaydet
+                                    if (inputElem.type === 'password') {
+                                        this._lastPasswordLength = newValue.length;
+                                    }
+                                    
+                                    // Görüntülemeyi güncelle - şifre alanı için de güncellemeyi zorla
                                     if (window.keyboardDisplayText) {
                                         window.keyboardDisplayText.updateInputText(inputElem);
                                     }
@@ -505,10 +519,44 @@
                                     inputElem.dispatchEvent(event);
                                 }
                             }
-                        };
-                        
-                        // Yeni uzun basma metodunu kullan - silme için daha hızlı tekrarlama
-                        this.setupLongPress(silKey, inputElement, silmeIslemiFonksiyonu, 80, 350);
+                        } else {
+                            // Seçili metni sil
+                            newValue = text.slice(0, selStart) + text.slice(selEnd);
+                            
+                            // Mevcut değerden farklıysa güncelle
+                            if (newValue !== inputElem.value) {
+                                inputElem.value = newValue;
+                                inputElem.selectionStart = inputElem.selectionEnd = selStart;
+                                
+                                // Şifre alanı için uzunluğu kaydet
+                                if (inputElem.type === 'password') {
+                                    this._lastPasswordLength = newValue.length;
+                                }
+                                
+                                // Görüntülemeyi güncelle
+                                if (window.keyboardDisplayText) {
+                                    window.keyboardDisplayText.updateInputText(inputElem);
+                                }
+                                
+                                // Input olayını tetikle
+                                const event = new Event('input', {bubbles: true});
+                                inputElem.dispatchEvent(event);
+                            }
+                        }
+                    };
+                    
+                    // Silme işlevini çağır
+                    silmeIslemi(inputElement);
+                    
+                    // Uzun basma için tuşu ayarla - özellikle parola alanları için hızlı olmalı
+                    const silKey = event ? event.currentTarget : null;
+                    if (silKey && !silKey.hasAttribute('data-long-press-setup')) {
+                        // Parola alanı için özel bir hızlı ayar kullan
+                        if (inputElement.type === 'password') {
+                            this.setupLongPress(silKey, inputElement, silmeIslemi, 30, 150); // Çok daha hızlı
+                        } else {
+                            this.setupLongPress(silKey, inputElement, silmeIslemi);
+                        }
                     }
                     
                     return true;
@@ -583,6 +631,16 @@
                     text = text.slice(0, selStart) + ' ' + text.slice(selEnd);
                     inputElement.value = text;
                     safelySetSelection(inputElement, selStart + 1, selStart + 1);
+                    
+                    // Input event'ini tetikle
+                    this.triggerInputEvent(inputElement);
+                    
+                    // Değişiklikleri göstermek için keyboardDisplayText'i hemen güncelle
+                    if (window.keyboardDisplayText) {
+                        window.keyboardDisplayText.updateInputText(inputElement);
+                        console.log('Boşluk tuşu basıldı ve metin güncellendi');
+                    }
+                    
                     return true;
 
                 case 'Kapat':
@@ -599,95 +657,169 @@
                     return true;
 
                 case 'ArrowLeft':
-                    // Sol ok işlevi - çift güncelleme olmadan
-                    {
-                        const selStart = inputElement.selectionStart;
-
-                        if (selStart > 0) {
-                            // Sadece input imlecini güncelle
-                            inputElement.selectionStart = inputElement.selectionEnd = selStart - 1;
-                            
-                            // Görüntüleme metninde de imleci güncelle
-                            if (window.keyboardDisplayText) {
-                                window.keyboardDisplayText.updateInputText(inputElement);
-                            }
-                        }
+                    // Sol ok işlevi
+                    const solOkIslemi = (inputElem) => {
+                        const selStart = inputElem.selectionStart;
+                        const selEnd = inputElem.selectionEnd;
+                        const state = window.keyboardState.getState();
                         
-                        // Uzun basma için tuş ayarla
-                        const arrowKey = event ? event.currentTarget : null;
-                        if (arrowKey) {
-                            // Sol ok işlevini tanımla
-                            const solOkFonksiyonu = (inputElem) => {
-                                const currentSelStart = inputElem.selectionStart;
-                                if (currentSelStart > 0) {
-                                    inputElem.selectionStart = inputElem.selectionEnd = currentSelStart - 1;
-                                    if (window.keyboardDisplayText) {
-                                        window.keyboardDisplayText.updateInputText(inputElem);
+                        // Shift basılı durumu kontrolü
+                        if (state.isShiftActive) {
+                            // İlk seçimde anchor noktasını başlat
+                            if (typeof this._selectionAnchor === 'undefined') {
+                                this._selectionAnchor = selEnd;
+                                this._selectionDirection = 'none';
+                                console.log('Anchor başlatıldı:', this._selectionAnchor);
+                            }
+                            
+                            // Sola doğru hareket için imleç pozisyonu kontrolü
+                            if (selStart > 0) {                    
+                                if (selStart === selEnd) {
+                                    // Henüz seçim başlamadı - sola doğru seçime başla
+                                    this._selectionDirection = 'left';
+                                    inputElem.selectionStart = selStart - 1;
+                                    inputElem.selectionEnd = this._selectionAnchor;
+                                } else if (this._selectionDirection === 'left' || selStart < this._selectionAnchor) {
+                                    // Sola doğru seçim devam ediyor - genişlet
+                                    this._selectionDirection = 'left';
+                                    inputElem.selectionStart = selStart - 1;
+                                    inputElem.selectionEnd = this._selectionAnchor;
+                                } else if (this._selectionDirection === 'right' || selEnd > this._selectionAnchor) {
+                                    // Sağa doğru seçim vardı - daralt
+                                    this._selectionDirection = 'right';
+                                    
+                                    // Seçimi daralt
+                                    if (selEnd > this._selectionAnchor) {
+                                        inputElem.selectionStart = selStart;
+                                        inputElem.selectionEnd = selEnd - 1;
+                                        
+                                        // Son karakter kaldığında seçimi kaldırmadan devam et
+                                        if (selEnd - 1 === this._selectionAnchor) {
+                                            console.log('Seçim minimum noktaya ulaştı, anchor:', this._selectionAnchor);
+                                        }
                                     }
                                 }
-                            };
-                            
-                            // Daha hızlı ve daha kısa gecikme ile uzun basma kurulumu
-                            this.setupLongPress(arrowKey, inputElement, solOkFonksiyonu, 80, 350);
+                            }
+                        } else {
+                            // Shift basılı değilse, normal imleç hareketi
+                            if (selStart > 0) {
+                            // Eğer seçim varsa, her zaman seçimi iptal et ve imleç hareketi yap
+                            if (selStart !== selEnd) {
+                            // Shift bırakıldıktan sonra, seçim iptal edilmeli
+                                inputElem.selectionStart = inputElem.selectionEnd = selStart;
+                            } else {
+                            // Normal sol hareket
+                                inputElem.selectionStart = inputElem.selectionEnd = selStart - 1;
+                                }
                         }
+                            
+                            // Seçim anchor'unu sıfırla
+                            this._selectionAnchor = undefined;
+                            this._selectionDirection = 'none';
+                        }
+                        
+                        // Görüntüleme metnini güncelle
+                        if (window.keyboardDisplayText) {
+                            window.keyboardDisplayText.updateInputText(inputElem);
+                        }
+                    };
+                    
+                    // İşlevi çağır
+                    solOkIslemi(inputElement);
+                    
+                    // Uzun basma için tuşu ayarla - sadece Shift basılı değilse
+                    const solKey = event ? event.currentTarget : null;
+                    if (solKey && !solKey.hasAttribute('data-long-press-setup') && !window.keyboardState.getState().isShiftActive) {
+                        this.setupLongPress(solKey, inputElement, solOkIslemi);
                     }
+                    
                     return true;
 
                 case 'ArrowRight':
-                    // Sağ ok işlevi - çift güncelleme olmadan
-                    {
-                        const text = inputElement.value;
-                        const selEnd = inputElement.selectionEnd;
-
-                        if (selEnd < text.length) {
-                            // Sadece input imlecini güncelle
-                            inputElement.selectionStart = inputElement.selectionEnd = selEnd + 1;
-                            
-                            // Görüntüleme metnini güncelle
-                            if (window.keyboardDisplayText) {
-                                window.keyboardDisplayText.updateInputText(inputElement);
-                            }
-                        }
+                    // Sağ ok işlevi
+                    const sagOkIslemi = (inputElem) => {
+                        const text = inputElem.value;
+                        const selStart = inputElem.selectionStart;
+                        const selEnd = inputElem.selectionEnd;
+                        const state = window.keyboardState.getState();
                         
-                        // Uzun basma için tuş ayarla
-                        const arrowKey = event ? event.currentTarget : null;
-                        if (arrowKey && !arrowKey.hasAttribute('data-long-press-setup')) {
-                            arrowKey.setAttribute('data-long-press-setup', 'true');
+                        // Shift basılı durumu kontrolü
+                        if (state.isShiftActive) {
+                            // İlk seçimde anchor noktasını başlat
+                            if (typeof this._selectionAnchor === 'undefined') {
+                                this._selectionAnchor = selStart;
+                                this._selectionDirection = 'none';
+                                console.log('Anchor başlatıldı:', this._selectionAnchor);
+                            }
                             
-                            const intervalFunc = function() {
-                                const currentText = inputElement.value;
-                                const currentSelEnd = inputElement.selectionEnd;
-                                if (currentSelEnd < currentText.length) {
-                                    inputElement.selectionStart = inputElement.selectionEnd = currentSelEnd + 1;
-                                    if (window.keyboardDisplayText) {
-                                        window.keyboardDisplayText.updateInputText(inputElement);
+                            // Sağa doğru hareket için imleç pozisyonu kontrolü
+                            if (selEnd < text.length) {                    
+                                if (selStart === selEnd) {
+                                    // Henüz seçim başlamadı - sağa doğru seçime başla
+                                    this._selectionDirection = 'right';
+                                    inputElem.selectionStart = this._selectionAnchor;
+                                    inputElem.selectionEnd = selEnd + 1;
+                                } else if (this._selectionDirection === 'right' || selEnd > this._selectionAnchor) {
+                                    // Sağa doğru seçim devam ediyor - genişlet
+                                    this._selectionDirection = 'right';
+                                    inputElem.selectionStart = this._selectionAnchor;
+                                    inputElem.selectionEnd = selEnd + 1;
+                                } else if (this._selectionDirection === 'left' || selStart < this._selectionAnchor) {
+                                    // Sola doğru seçim vardı - daralt
+                                    this._selectionDirection = 'left';
+                                    
+                                    // Seçimi daralt
+                                    if (selStart < this._selectionAnchor) {
+                                        inputElem.selectionStart = selStart + 1;
+                                        inputElem.selectionEnd = this._selectionAnchor;
+                                        
+                                        // Son karakter kaldığında seçimi kaldırmadan devam et
+                                        if (selStart + 1 === this._selectionAnchor) {
+                                            console.log('Seçim minimum noktaya ulaştı, anchor:', this._selectionAnchor);
+                                        }
                                     }
                                 }
-                            };
-                            
-                            arrowKey.addEventListener('mousedown', function(e) {
-                                arrowKey.timer = setTimeout(function() {
-                                    arrowKey.interval = setInterval(intervalFunc, 150);
-                                }, 500);
-                                e.preventDefault();
-                            });
-                            
-                            const clearTimers = function() {
-                                clearTimeout(arrowKey.timer);
-                                clearInterval(arrowKey.interval);
-                            };
-                            
-                            arrowKey.addEventListener('mouseup', clearTimers);
-                            arrowKey.addEventListener('mouseleave', clearTimers);
+                            }
+                        } else {
+                            // Shift basılı değilse, normal imleç hareketi
+                            if (selEnd < text.length) {
+                            // Eğer seçim varsa, her zaman seçimi iptal et ve imleç hareketi yap
+                            if (selStart !== selEnd) {
+                            // Shift bırakıldıktan sonra, seçim iptal edilmeli
+                                inputElem.selectionStart = inputElem.selectionEnd = selEnd;
+                            } else {
+                            // Normal sağ hareket
+                                inputElem.selectionStart = inputElem.selectionEnd = selEnd + 1;
+                                }
                         }
+                            
+                            // Seçim anchor'unu sıfırla
+                            this._selectionAnchor = undefined;
+                            this._selectionDirection = 'none';
+                        }
+                        
+                        // Görüntüleme metnini güncelle
+                        if (window.keyboardDisplayText) {
+                            window.keyboardDisplayText.updateInputText(inputElem);
+                        }
+                    };
+                    
+                    // İşlevi çağır
+                    sagOkIslemi(inputElement);
+                    
+                    // Uzun basma için tuşu ayarla - Shift basılı değilse
+                    const sagKey = event ? event.currentTarget : null;
+                    if (sagKey && !sagKey.hasAttribute('data-long-press-setup') && !window.keyboardState.getState().isShiftActive) {
+                        this.setupLongPress(sagKey, inputElement, sagOkIslemi);
                     }
+                    
                     return true;
 
                 case 'ArrowUp':
-                    // Yukarı ok işlevi - çift güncelleme olmadan
-                    {
-                        const text = inputElement.value;
-                        const selStart = inputElement.selectionStart;
+                    // Yukarı ok işlevi
+                    const yukariOkIslemi = (inputElem) => {
+                        const text = inputElem.value;
+                        const selStart = inputElem.selectionStart;
 
                         // Mevcut konumun satır başını bul
                         let satirbasi = selStart;
@@ -713,22 +845,31 @@
 
                             // Önceki satırın aynı konumuna git, ancak satırın sonunu aşma
                             const yeniPozisyon = Math.min(oncekiSatirBasi + offset, oncekiSatirSonu);
-                            inputElement.selectionStart = inputElement.selectionEnd = yeniPozisyon;
+                            inputElem.selectionStart = inputElem.selectionEnd = yeniPozisyon;
                             
                             // Görüntüleme metnini güncelle
                             if (window.keyboardDisplayText) {
-                                window.keyboardDisplayText.updateInputText(inputElement);
+                                window.keyboardDisplayText.updateInputText(inputElem);
                             }
                         }
+                    };
+                    
+                    // İşlevi çağır
+                    yukariOkIslemi(inputElement);
+                    
+                    // Uzun basma için tuşu ayarla
+                    const yukariKey = event ? event.currentTarget : null;
+                    if (yukariKey && !yukariKey.hasAttribute('data-long-press-setup')) {
+                        this.setupLongPress(yukariKey, inputElement, yukariOkIslemi);
                     }
                     
                     return true;
 
                 case 'ArrowDown':
-                    // Aşağı ok işlevi - çift güncelleme olmadan
-                    {
-                        const text = inputElement.value;
-                        const selStart = inputElement.selectionStart;
+                    // Aşağı ok işlevi
+                    const asagiOkIslemi = (inputElem) => {
+                        const text = inputElem.value;
+                        const selStart = inputElem.selectionStart;
 
                         // Mevcut konumun satır başını bul
                         let satırBasi = selStart;
@@ -757,13 +898,22 @@
 
                             // Sonraki satırın aynı konumuna git, ancak satırın sonunu aşma
                             const yeniPozisyon = Math.min(sonrakiSatirBasi + offset, sonrakiSatirSonu);
-                            inputElement.selectionStart = inputElement.selectionEnd = yeniPozisyon;
+                            inputElem.selectionStart = inputElem.selectionEnd = yeniPozisyon;
                             
                             // Görüntüleme metnini güncelle
                             if (window.keyboardDisplayText) {
-                                window.keyboardDisplayText.updateInputText(inputElement);
+                                window.keyboardDisplayText.updateInputText(inputElem);
                             }
                         }
+                    };
+                    
+                    // İşlevi çağır
+                    asagiOkIslemi(inputElement);
+                    
+                    // Uzun basma için tuşu ayarla
+                    const asagiKey = event ? event.currentTarget : null;
+                    if (asagiKey && !asagiKey.hasAttribute('data-long-press-setup')) {
+                        this.setupLongPress(asagiKey, inputElement, asagiOkIslemi);
                     }
                     
                     return true;
@@ -814,7 +964,24 @@
 
             // Yazılan metni başlık bölümünde göster
             if (window.keyboardDisplayText && inputElement) {
-                window.keyboardDisplayText.handleKeyPress(key, inputElement);
+                // Güvenli bir şekilde görüntüleme modulunu çağır
+                try {
+                    window.keyboardDisplayText.handleKeyPress(key, inputElement);
+                    // Ekstra güvenlik için, bir süre sonra metni zorla güncelle
+                    setTimeout(() => {
+                        if (window.keyboardDisplayText) {
+                            window.keyboardDisplayText.updateInputText(inputElement);
+                        }
+                    }, 30);
+                } catch (e) {
+                    console.error('Görüntüleme hatası:', e);
+                    // Hata durumunda geri yükleme çözümü
+                    setTimeout(() => {
+                        if (window.keyboardDisplayText) {
+                            window.keyboardDisplayText.updateInputText(inputElement);
+                        }
+                    }, 50);
+                }
             }
 
             // Input alanını aktif et - mevcut odağı koruyarak
@@ -836,7 +1003,32 @@
                 if (state.isControlActive) {
                     window.keyboardState.toggleControlActive(); // Kapat
                 }
-                window.keyboardState.toggleShiftActive();
+                
+                // Shift durumunu değiştir
+                const newShiftState = window.keyboardState.toggleShiftActive();
+                
+                // Eğer shift kapatılıyorsa, seçim anchor'unu sıfırla ve seçimi iptal et
+                if (!newShiftState) {  // Shift kapatıldığında
+                    // Seçim anchor'unu sıfırla
+                    this._selectionAnchor = undefined;
+                    this._selectionDirection = 'none';
+                    
+                    // Eğer aktif bir seçim varsa, iptal et
+                    const inputElement = state.currentInput;
+                    if (inputElement && inputElement.selectionStart !== inputElement.selectionEnd) {
+                        // Seçimi kaldır - sadece imleç bırak
+                        const cursorPos = inputElement.selectionEnd;
+                        inputElement.selectionStart = inputElement.selectionEnd = cursorPos;
+                        
+                        // Görüntüleme metnini güncelle
+                        if (window.keyboardDisplayText) {
+                            window.keyboardDisplayText.updateInputText(inputElement);
+                        }
+                    }
+                    
+                    console.log('Shift kapatıldı, anchor sıfırlandı, seçim iptal edildi');
+                }
+                
                 window.keyboardDisplay.updateKeyDisplay();
                 return;
             }
@@ -877,7 +1069,18 @@
                 switch (key) {
                     case 'a': // Control+A: Tümünü seç
                         if (supportsSelection(inputElement)) {
+                            // Tüm metni seç
                             inputElement.select();
+                            
+                            // Seçim anchor'unu güncelle - tam seçim için başlangıç ve bitiş noktalarını ayarla
+                            this._selectionAnchor = 0; // Başlangıç noktası metinin başı
+                            this._selectionDirection = 'right'; // Sağa doğru seçim
+                            
+                            // Görüntüleme metnini hemen güncelle
+                            if (window.keyboardDisplayText) {
+                                // Seçim görünürlüğünü sağlamak için hemen güncelle
+                                window.keyboardDisplayText.updateInputText(inputElement);
+                            }
                         }
                         window.keyboardState.toggleControlActive(); // Kullanıldıktan sonra devre dışı bırak
                         window.keyboardDisplay.updateKeyDisplay();
@@ -990,6 +1193,17 @@
 
             // Input olayını tetikle
             this.triggerInputEvent(inputElement);
+            
+            // Klavye görüntüleme metnini hemen güncelle
+            if (window.keyboardDisplayText) {
+                // Her karakter için hemen güncellemeyi sağla
+                window.keyboardDisplayText.updateInputText(inputElement);
+                
+                // Boşluk karakteri için console log ekleyelim
+                if (charToInsert === ' ') {
+                    console.log('Boşluk karakteri eklendi:', inputElement.value);
+                }
+            }
 
             // Saniyenin küçük bir kısmı kadar bekleyip input alanını yeniden odakla
             setTimeout(function () {

@@ -275,6 +275,16 @@
                 }
 
                 state.lastKeyboardOpenTime = Date.now();
+            
+            // Görüntüleme metni için başlığı güncelle (varsa)
+            if (window.keyboardDisplayText && state.currentInput) {
+                try {
+                    window.keyboardDisplayText.updateInputText(state.currentInput);
+                    console.log('Başlık metni güncellendi - Kısa süre içinde görünecek');
+                } catch (e) {
+                    console.error('Başlık metni güncellenirken hata:', e);
+                }
+            }
 
                 // Eğer klavye manuel olarak konumlandırılmışsa, bu konumu koru ve sadece görünür yap
                 if (state.keyboardElement.hasAttribute('data-manually-positioned')) {
@@ -304,7 +314,16 @@
                     // 100ms gecikme ekleyerek, klavyenin açılmasıyla tıklama arasında bir tampon oluştur
                     setTimeout(() => {
                         document.addEventListener('click', state.documentClickListener);
-                    }, 100);
+
+                        // Başlık metnini son kez güncelle - herhangi bir sorunu gidermek için
+                        if (window.keyboardDisplayText && state.currentInput) {
+                            try {
+                                window.keyboardDisplayText.updateInputText(state.currentInput);
+                            } catch (e) {
+                                console.error('Başlık metni güncellenirken son hata:', e);
+                            }
+                        }
+                }, 100);
                 }
 
                 // Input alanı var mı kontrol et

@@ -41,13 +41,95 @@
                         margin: 0 2px;
                         animation: blink 1s infinite;
                     }
+                    
+                    /* Boşluk görünürleştirici stil */
+                    .keyboard-space-highlight {
+                        text-decoration: underline;
+                        text-decoration-color: #ffcc00;
+                        text-decoration-style: dotted;
+                    }
+                    
+                    /* Boşluk karakter belirteci - arka plan rengi ile aynı yapılıyor */
+                    .space-mark {
+                        display: inline-block;
+                        width: 8px;
+                        height: 3px;
+                        margin: 0 2px;
+                        vertical-align: middle;
+                        /* Görünmez yap - transparan */
+                        background-color: transparent;
+                    }
+                    
+                    /* Metin seçim stili */
+                    .selected-text {
+                        background-color: #3a6a8f;
+                        color: white;
+                        border-radius: 2px;
+                    }
                 `;
                 document.head.appendChild(style);
             }
         },
 
         // Başlık metnini güncelle
-        updateDisplayText: function(text) {
+        // Boşlukları görünür hale getir
+        makeSpacesVisible: function(text) {
+            // Boşlukları değiştirmek yerine, doğrudan span elementi kullanacağız
+            // Bu nedenle sadece orjinal metni döndür
+            return text;
+        },
+        
+        // Metni HTML olarak işleyip boşlukları görünür yap
+        renderTextWithVisibleSpaces: function(container, text, isSelected) {
+            // Metni karakter karakter işle
+            if (!text) return;
+            
+            // Önce container'i temizle
+            container.innerHTML = '';
+            
+            // Eğer tüm metin seçiliyse
+            if (isSelected === true) {
+                const selectedSpan = document.createElement('span');
+                selectedSpan.className = 'selected-text';
+                
+                // Metin içerisindeki boşlukları görünür yap
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    
+                    if (char === ' ') {
+                        // Boşluk yerine özel stil elementi koy
+                        const spaceSpan = document.createElement('span');
+                        spaceSpan.className = 'space-mark';
+                        selectedSpan.appendChild(spaceSpan);
+                    } else {
+                        // Normal karakter
+                        const charNode = document.createTextNode(char);
+                        selectedSpan.appendChild(charNode);
+                    }
+                }
+                
+                container.appendChild(selectedSpan);
+                return;
+            }
+            
+            // Her karakter için
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                
+                if (char === ' ') {
+                    // Boşluk yerine özel stil elementi koy
+                    const spaceSpan = document.createElement('span');
+                    spaceSpan.className = 'space-mark';
+                    container.appendChild(spaceSpan);
+                } else {
+                    // Normal karakter
+                    const charNode = document.createTextNode(char);
+                    container.appendChild(charNode);
+                }
+            }
+        },
+
+        updateDisplayText: function(text, hasSelection, selectionStart, selectionEnd) {
             const displayElement = document.getElementById('keyboard-display-text');
             if (!displayElement) return;
 
@@ -58,9 +140,61 @@
 
             // İmleç için CSS ekle
             this.addCursorStyle();
+            
+            // Parametrelerin varsayılan değerlerini ayarla
+            hasSelection = hasSelection || false;
+            selectionStart = selectionStart || 0;
+            selectionEnd = selectionEnd || 0;
 
             // Metni ve imleci göster
             if (text) {
+                // Eğer seçilmiş metin varsa, farklı işle
+                if (hasSelection) {
+                    // Seçim bilgisine göre metni parçala
+                    const beforeSelection = text.substring(0, selectionStart);
+                    const selection = text.substring(selectionStart, selectionEnd);
+                    const afterSelection = text.substring(selectionEnd);
+                    
+                    // Tüm HTML içeriğini temizle
+                    displayElement.textContent = '';
+                    
+                    // Seçim öncesi metni ekle
+                    if (beforeSelection) {
+                        const beforeDiv = document.createElement('span');
+                        this.renderTextWithVisibleSpaces(beforeDiv, beforeSelection, false);
+                        displayElement.appendChild(beforeDiv);
+                    }
+                    
+                    // Seçilen metni ekle
+                    if (selection) {
+                        const selectionDiv = document.createElement('span');
+                        this.renderTextWithVisibleSpaces(selectionDiv, selection, true);
+                        displayElement.appendChild(selectionDiv);
+                    }
+                    
+                    // Seçim sonrası metni ekle
+                    if (afterSelection) {
+                        const afterDiv = document.createElement('span');
+                        this.renderTextWithVisibleSpaces(afterDiv, afterSelection, false);
+                        displayElement.appendChild(afterDiv);
+                    }
+                    
+                    // İmleçi ekle - seçim sonunda göster
+                    const cursor = document.createElement('span');
+                    cursor.className = 'keyboard-cursor';
+                    
+                    // İmleci seçim sonuna yerleştir
+                    const lastElement = displayElement.lastChild;
+                    if (lastElement && lastElement.tagName === 'SPAN' && lastElement.className === 'selected-text') {
+                        // İmleci seçimin sonuna ekle
+                        displayElement.appendChild(cursor);
+                    } else {
+                        // Seçimin sonrasına işaret eden imleci ekle
+                        displayElement.appendChild(cursor);
+                    }
+                    
+                    return;
+                }
                 // Metin varsa, imlecin pozisyonuna göre parçalara böl
                 let prefix = '';
                 let suffix = '';
@@ -116,8 +250,10 @@
 
                 // İlk kısmı ekle
                 if (prefix) {
-                    const prefixNode = document.createTextNode(prefix);
-                    displayElement.appendChild(prefixNode);
+                    // Boşlukları görünür yapan div
+                    const prefixDiv = document.createElement('span');
+                    this.renderTextWithVisibleSpaces(prefixDiv, prefix, false);
+                    displayElement.appendChild(prefixDiv);
                 }
 
                 // İmleç ekle
@@ -127,8 +263,10 @@
 
                 // Son kısmı ekle
                 if (suffix) {
-                    const suffixNode = document.createTextNode(suffix);
-                    displayElement.appendChild(suffixNode);
+                    // Boşlukları görünür yapan div
+                    const suffixDiv = document.createElement('span');
+                    this.renderTextWithVisibleSpaces(suffixDiv, suffix, false);
+                    displayElement.appendChild(suffixDiv);
                 }
             } else {
                 // Boş metin durumunda sadece imleç
@@ -163,23 +301,23 @@
         updateInputText: function(inputElement) {
             if (!inputElement) return;
             
-            // Rate limiting - çok sık güncelleme yapmasını engelle
-            const now = Date.now();
-            if (now - this.lastUpdateTime < this.updateThrottle) {
-                // Eğer çok sık güncelleme yapılıyorsa, mevcut güncellemeyi atla
-                // ve sonraki güncellemeden emin ol
-                if (!this.pendingUpdate) {
-                    this.pendingUpdate = true;
-                    setTimeout(() => {
-                        this.pendingUpdate = false;
-                        this.updateInputText(inputElement);
-                    }, this.updateThrottle);
-                }
-                return;
-            }
+            // Tarayıcıdaki imleç ile daima hizalı kal
+            let hasSelection = false;
+            let selectionStart = 0;
+            let selectionEnd = 0;
             
-            this.lastUpdateTime = now;
-            this.pendingUpdate = false;
+            if (inputElement.selectionStart !== undefined) {
+                try {
+                    selectionStart = inputElement.selectionStart;
+                    selectionEnd = inputElement.selectionEnd;
+                    this.cursorPosition = selectionEnd; // İmleç pozisyonunu seçimin sonu olarak ayarla
+                    
+                    // Seçim var mı kontrol et
+                    hasSelection = (selectionStart !== selectionEnd);
+                } catch (e) {
+                    console.warn("selectionStart/selectionEnd okunamadı:", e);
+                }
+            }
 
             // Eğer input type="password" ise, metin gösterme
             if (inputElement.type === 'password') {
@@ -189,18 +327,9 @@
 
             // Mevcut texti al
             this.inputText = inputElement.value || '';
-
-            // İmleç pozisyonunu güncelle - doğrudan kontrol ediliyor değilse
-            if (!this.directCursorControl && inputElement.selectionStart !== undefined) {
-                try {
-                    this.cursorPosition = inputElement.selectionStart;
-                } catch (e) {
-                    console.warn("selectionStart okunamadı:", e);
-                }
-            }
-
-            // Display metnini güncelle
-            this.updateDisplayText(this.inputText || '');
+            
+            // Display metnini güncelle - seçim bilgisini gönder
+            this.updateDisplayText(this.inputText || '', hasSelection, selectionStart, selectionEnd);
         },
 
         // Yeni API - Ok tuşlarıyla imleç hareketi için 
@@ -240,46 +369,30 @@
         handleKeyPress: function(key, inputElement) {
             if (!inputElement) return;
 
-            // Şifre alanları için özel işlem
+            // Şifre alanları için özel işlem, ama doğrudan güncelleriz
             if (inputElement.type === 'password') {
                 this.updateDisplayText('**** Şifre Yazılıyor ****');
+
+                // Silme tuşu için parola alanında özel hizalama işlemi
+                if (key === 'Sil') {
+                    // Silme tuşu için doğrudan güncelle
+                    this.updateInputText(inputElement);
+                }
+                
+                return;
+            }
+            
+            // Özel tuşları işle - boşluk için özel durum
+            if (key === 'Boşluk') {
+                // Boşluk tuşu için hemen güncelleme yap
+                this.updateInputText(inputElement);
+                console.log('Boşluk tuşu işlendi', inputElement.value);
                 return;
             }
 
-            // Özel tuşları işle
-            switch (key) {
-                case 'Sil':
-                    // Silme işlemi sonrası metni güncelle
-                    setTimeout(() => this.updateInputText(inputElement), 50);
-                    break;
-
-                case 'ArrowLeft':
-                case 'ArrowRight':
-                    // Ok tuşları için input değişiklikleri keyboard-input.js'de yapılıyor
-                    // Burada hiçbir işlem yapmamak gerekiyor
-                    break;
-
-                case 'Tab':
-                case 'Enter':
-                case 'Boşluk':
-                case 'ArrowUp':
-                case 'ArrowDown':
-                    // Bu tuşlar sonrası metni ve imleç konumunu güncelle
-                    setTimeout(() => this.updateInputText(inputElement), 50);
-                    break;
-
-                case 'Shift':
-                case 'Caps':
-                case 'AltGr':
-                case 'Control':
-                case 'Kapat':
-                    // Bu tuşlar metni değiştirmez, bir şey yapma
-                    break;
-
-                default:
-                    // Normal karakter, bir süre bekle ve güncel metni göster (yazılması için)
-                    setTimeout(() => this.updateInputText(inputElement), 50);
-            }
+            // Basitçe input metnini güncelle - imleç browser'dakiyle sürekli senkronize kalacak
+            // Diğer tüm tuşlar için doğrudan güncelleme yap
+            this.updateInputText(inputElement);
         },
 
         // Varsayılan metne dön

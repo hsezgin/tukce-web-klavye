@@ -32,6 +32,7 @@
             const titleElement = document.createElement('div');
             titleElement.className = 'keyboard-title';
             titleElement.textContent = 'Türkçe Klavye';
+            titleElement.id = 'keyboard-display-text';
 
             // Başlığı çubuğa ekle
             headerElement.appendChild(titleElement);
