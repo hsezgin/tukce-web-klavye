@@ -1,12 +1,13 @@
 {
   "name": "Türkçe Web Klavyesi",
-  "version": "1.1",
+  "version": "1.1.0",
   "description": "Form alanlarına tıklandığında web tabanlı Türkçe ekran klavyesi açar",
   "manifest_version": 3,
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["storage"],
+  "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
-      "matches": ["<all_urls>", "https://*.repl.co/*"],
+      "matches": ["<all_urls>"],
       "js": [
         "charmaps.js",
         "keyboard-state.js",
@@ -37,11 +38,20 @@
     "default_popup": "popup.html",
     "default_icon": {
       "50": "images/icon50.png",
-      "100": "images/icon100.png"
+      "100": "images/icon100.png",
+      "128": "images/icon128.png"
     }
   },
   "icons": {
     "50": "images/icon50.png",
-    "100": "images/icon100.png"
-  }
+    "100": "images/icon100.png",
+    "128": "images/icon128.png"
+  },
+  "background": {
+    "service_worker": "background-worker.js"
+  },
+  "web_accessible_resources": [{
+    "resources": ["images/*"],
+    "matches": ["<all_urls>"]
+  }]
 }

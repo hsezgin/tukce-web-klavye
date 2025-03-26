@@ -1,4 +1,4 @@
-// Arka plan işlemleri için
+// Arka plan service worker - Manifest V3 için
 chrome.runtime.onInstalled.addListener(function(details) {
     if (details.reason === 'install') {
         // İlk kurulumda varsayılan ayarları belirle
@@ -12,7 +12,6 @@ chrome.runtime.onInstalled.addListener(function(details) {
 
 // İstemcilerden gelen mesajları dinle
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    // Burada ileride gerekebilecek işlemler eklenebilir
     if (request.action === "getStatus") {
         chrome.storage.sync.get(['keyboardEnabled'], function(result) {
             sendResponse({ enabled: result.keyboardEnabled !== undefined ? result.keyboardEnabled : true });
